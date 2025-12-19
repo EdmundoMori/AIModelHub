@@ -93,7 +93,14 @@ curl http://localhost:3000/health
 
 - Inspired by Eclipse Dataspace Components (EDC): extensions of this architecture to apply it to any data space.
 - Base technologies: Angular for UI, Express/Node.js for services, PostgreSQL for metadata, MinIO for S3 artifacts.
-- Funding: PIONERA project.
+
+## Funding
+
+This work has received funding from the PIONERA project (Enhancing interoperability in data spaces through artificial intelligence), a project funded in the context of the call for Technological Products and Services for Data Spaces of the Ministry for Digital Transformation and Public Administration within the framework of the PRTR funded by the European Union (NextGenerationEU)
+
+<div align="center">
+  <img src="Logos financiación.png" alt="Logos financiación" width="900" />
+</div>
 
 ## Authors and contact
 
