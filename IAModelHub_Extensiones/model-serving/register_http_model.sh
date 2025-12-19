@@ -1,56 +1,56 @@
 #!/bin/bash
 
-# Script para registrar un modelo HTTP como asset en EDC Connector
-# Uso: ./register_http_model.sh
+# Script to register an HTTP model as an asset in the EDC Connector
+# Usage: ./register_http_model.sh
 
 set -e
 
-# ============ CONFIGURACIÓN ============
+# ============ CONFIGURATION ============
 EDC_API_URL="http://localhost:3000"
 MODEL_SERVER_URL="http://localhost:8080"
 API_KEY="ml-model-key-2024"
 
-# Credenciales EDC
-USERNAME="user-conn-oeg-demo"
-PASSWORD="a!ulzZ5dJvLJSzvM"
+# EDC credentials
+USERNAME="user-conn-user1-demo"
+PASSWORD="user1123"
 
-# ============ FUNCIONES ============
+# ============ FUNCTIONS ============
 get_token() {
-    echo "🔐 Obteniendo token de autenticación..."
+    echo "🔐 Getting auth token..."
     TOKEN=$(curl -s -X POST "${EDC_API_URL}/auth/login" \
         -H "Content-Type: application/json" \
         -d "{\"username\":\"${USERNAME}\",\"password\":\"${PASSWORD}\"}" | jq -r '.token')
     
     if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-        echo "❌ Error: No se pudo obtener el token"
+        echo "❌ Error: Could not get token"
         exit 1
     fi
-    echo "✓ Token obtenido"
+    echo "✓ Token obtained"
 }
 
 check_model_server() {
     echo ""
-    echo "🔍 Verificando servidor de modelos..."
+    echo "🔍 Checking model server..."
     
     HEALTH=$(curl -s "${MODEL_SERVER_URL}/health" | jq -r '.status' 2>/dev/null || echo "error")
     
     if [ "$HEALTH" != "healthy" ]; then
-        echo "❌ Error: El servidor de modelos no está disponible en ${MODEL_SERVER_URL}"
-        echo "   Inicia el servidor con: python3 model_http_server.py"
+        echo "❌ Error: Model server not available at ${MODEL_SERVER_URL}"
+        echo "   Start the server with: python3 model_http_server.py"
         exit 1
     fi
     
-    echo "✓ Servidor de modelos disponible"
+    echo "✓ Model server available"
     
-    # Listar modelos disponibles
+    # List available models
     echo ""
-    echo "📦 Modelos disponibles:"
+    echo "📦 Available models:"
     curl -s "${MODEL_SERVER_URL}/models" | jq -r '.models | to_entries[] | "   - \(.key): \(.value.description)"'
 }
 
 register_lgbm_model() {
     echo ""
-    echo "📝 Registrando LGBM Classifier como asset..."
+    echo "📝 Registering LGBM Classifier as asset..."
     
     ASSET_ID="lgbm-classifier-http-$(date +%s)"
     
@@ -62,8 +62,8 @@ register_lgbm_model() {
             "properties": {
                 "name": "LGBM Classifier Model v1",
                 "version": "1.0",
-                "description": "LGBM Classifier para predicción de elasticidad de precios",
-                "shortDescription": "Modelo de clasificación con LightGBM",
+                "description": "LGBM Classifier for price elasticity prediction",
+                "shortDescription": "Classification model with LightGBM",
                 "keywords": "lgbm,classification,pricing,elasticity",
                 "contentType": "application/octet-stream",
                 "format": "pickle",
@@ -91,12 +91,12 @@ register_lgbm_model() {
         }')
     
     if echo "$RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
-        echo "❌ Error al registrar asset:"
+        echo "❌ Error registering asset:"
         echo "$RESPONSE" | jq '.errors'
         exit 1
     fi
     
-    echo "✓ Asset registrado exitosamente"
+    echo "✓ Asset registered successfully"
     echo "   ID: ${ASSET_ID}"
     echo ""
     echo "$RESPONSE" | jq '.'
@@ -104,7 +104,7 @@ register_lgbm_model() {
 
 create_policy_and_contract() {
     echo ""
-    echo "📋 Creando política de acceso..."
+    echo "📋 Creating access policy..."
     
     POLICY_ID="policy-lgbm-http-$(date +%s)"
     
@@ -123,15 +123,15 @@ create_policy_and_contract() {
         }')
     
     if echo "$POLICY_RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
-        echo "❌ Error al crear política:"
+        echo "❌ Error creating policy:"
         echo "$POLICY_RESPONSE" | jq '.errors'
         exit 1
     fi
     
-    echo "✓ Política creada: ${POLICY_ID}"
+    echo "✓ Policy created: ${POLICY_ID}"
     
     echo ""
-    echo "📜 Creando contrato..."
+    echo "📜 Creating contract..."
     
     CONTRACT_ID="contract-lgbm-http-$(date +%s)"
     
@@ -152,17 +152,17 @@ create_policy_and_contract() {
         }')
     
     if echo "$CONTRACT_RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
-        echo "❌ Error al crear contrato:"
+        echo "❌ Error creating contract:"
         echo "$CONTRACT_RESPONSE" | jq '.errors'
         exit 1
     fi
     
-    echo "✓ Contrato creado: ${CONTRACT_ID}"
+    echo "✓ Contract created: ${CONTRACT_ID}"
 }
 
 verify_in_catalog() {
     echo ""
-    echo "🔍 Verificando en el catálogo..."
+    echo "🔍 Verifying in catalog..."
     
     sleep 2
     
@@ -172,21 +172,21 @@ verify_in_catalog() {
         -d '{}')
     
     COUNT=$(echo "$CATALOG" | jq 'length')
-    echo "✓ Total de assets en catálogo: ${COUNT}"
+    echo "✓ Total assets in catalog: ${COUNT}"
     
-    # Buscar nuestro asset
+    # Find our asset
     FOUND=$(echo "$CATALOG" | jq -r --arg id "$ASSET_ID" '.[] | select(.assetId == $id) | .properties.name' 2>/dev/null || echo "")
     
     if [ -n "$FOUND" ]; then
-        echo "✓ Asset encontrado en catálogo: ${FOUND}"
+        echo "✓ Asset found in catalog: ${FOUND}"
     else
-        echo "⚠ Asset no encontrado en catálogo (puede tardar unos segundos)"
+        echo "⚠ Asset not found in catalog (may take a few seconds)"
     fi
 }
 
 # ============ MAIN ============
 echo "================================================"
-echo "  Registro de Modelo HTTP en EDC Connector"
+echo "  HTTP Model Registration in EDC Connector"
 echo "================================================"
 
 get_token
@@ -197,12 +197,12 @@ verify_in_catalog
 
 echo ""
 echo "================================================"
-echo "  ✅ Registro completado exitosamente"
+echo "  ✅ Registration completed successfully"
 echo "================================================"
 echo ""
-echo "Próximos pasos:"
-echo "  1. Abre ML Assets Browser: http://localhost:4200/ml-assets"
-echo "  2. Busca: LGBM Classifier Model v1"
-echo "  3. Verifica que el asset aparece con Storage Type: HttpData"
-echo "  4. Revisa el catálogo: http://localhost:4200/catalog"
+echo "Next steps:"
+echo "  1. Open IA Assets Browser: http://localhost:4200/ml-assets"
+echo "  2. Search: LGBM Classifier Model v1"
+echo "  3. Verify the asset appears with Storage Type: HttpData"
+echo "  4. Check the catalog: http://localhost:4200/catalog"
 echo ""

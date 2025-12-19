@@ -24,27 +24,27 @@ export class MlAssetsService {
   private readonly mlBrowserService = inject(MlBrowserService);
 
   /**
-   * Obtiene todos los ML Assets desde Federated Catalog
+   * Retrieves all IA assets from the federated catalog
    */
   getMachinelearningAssets(): Observable<MLAsset[]> {
-    console.log('[ML Assets Service] Calling mlBrowserService.getPaginatedMLAssets()...');
+    console.log('[IA Assets Service] Calling mlBrowserService.getPaginatedMLAssets()...');
     return this.mlBrowserService.getPaginatedMLAssets();
   }
 
   /**
-   * Cuenta el total de ML Assets
+   * Counts total IA assets
    */
   count(): Observable<number> {
     return this.mlBrowserService.count();
   }
 
   /**
-   * Filtra assets de ML según criterios específicos
+   * Filters IA assets according to specific criteria
    */
   filterAssets(assets: MLAsset[], filters: MLAssetFilter): MLAsset[] {
     let filtered = [...assets];
 
-    // Filtro por término de búsqueda
+    // Filter by search term
     if (filters.searchTerm && filters.searchTerm.trim() !== '') {
       const searchLower = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(asset =>
@@ -55,49 +55,49 @@ export class MlAssetsService {
       );
     }
 
-    // Filtro por tasks
+    // Filter by tasks
     if (filters.tasks && filters.tasks.length > 0) {
       filtered = filtered.filter(asset =>
         asset.tasks.some(t => filters.tasks!.includes(t))
       );
     }
 
-    // Filtro por subtasks
+    // Filter by subtasks
     if (filters.subtasks && filters.subtasks.length > 0) {
       filtered = filtered.filter(asset =>
         asset.subtasks.some(s => filters.subtasks!.includes(s))
       );
     }
 
-    // Filtro por algorithms
+    // Filter by algorithms
     if (filters.algorithms && filters.algorithms.length > 0) {
       filtered = filtered.filter(asset =>
         asset.algorithms.some(a => filters.algorithms!.includes(a))
       );
     }
 
-    // Filtro por libraries
+    // Filter by libraries
     if (filters.libraries && filters.libraries.length > 0) {
       filtered = filtered.filter(asset =>
         asset.libraries.some(l => filters.libraries!.includes(l))
       );
     }
 
-    // Filtro por frameworks
+    // Filter by frameworks
     if (filters.frameworks && filters.frameworks.length > 0) {
       filtered = filtered.filter(asset =>
         asset.frameworks.some(f => filters.frameworks!.includes(f))
       );
     }
 
-    // Filtro por storageTypes
+    // Filter by storageTypes
     if (filters.storageTypes && filters.storageTypes.length > 0) {
       filtered = filtered.filter(asset =>
         !!asset.storageType && filters.storageTypes!.includes(asset.storageType)
       );
     }
 
-    // Filtro por software (unión de libraries + frameworks)
+    // Filter by software (union of libraries + frameworks)
     if (filters.software && filters.software.length > 0) {
       filtered = filtered.filter(asset => {
         const tags = new Set<string>([...asset.libraries, ...asset.frameworks]);
@@ -105,7 +105,7 @@ export class MlAssetsService {
       });
     }
 
-    // Filtro por assetSources (Local Asset o External Asset)
+    // Filter by assetSources (Local Asset or External Asset)
     if (filters.assetSources && filters.assetSources.length > 0) {
       filtered = filtered.filter(asset => {
         const assetType = asset.isLocal ? 'Local Asset' : 'External Asset';
@@ -113,7 +113,7 @@ export class MlAssetsService {
       });
     }
 
-    // Filtro por formats
+    // Filter by formats
     if (filters.formats && filters.formats.length > 0) {
       filtered = filtered.filter(asset =>
         !!asset.format && filters.formats!.includes(asset.format)
@@ -124,7 +124,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todas las tareas únicas de los assets
+   * Extract all unique tasks from assets
    */
   extractUniqueTasks(assets: MLAsset[]): string[] {
     const tasks = new Set<string>();
@@ -135,7 +135,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los subtasks únicos de los assets
+   * Extract all unique subtasks from assets
    */
   extractUniqueSubtasks(assets: MLAsset[]): string[] {
     const subtasks = new Set<string>();
@@ -146,7 +146,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los algoritmos únicos de los assets
+   * Extract all unique algorithms from assets
    */
   extractUniqueAlgorithms(assets: MLAsset[]): string[] {
     const algorithms = new Set<string>();
@@ -157,7 +157,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todas las librerías únicas de los assets
+   * Extract all unique libraries from assets
    */
   extractUniqueLibraries(assets: MLAsset[]): string[] {
     const libraries = new Set<string>();
@@ -168,7 +168,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los frameworks únicos de los assets
+   * Extract all unique frameworks from assets
    */
   extractUniqueFrameworks(assets: MLAsset[]): string[] {
     const frameworks = new Set<string>();
@@ -179,7 +179,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los storageTypes únicos de los assets
+   * Extract all unique storageTypes from assets
    */
   extractUniqueStorageTypes(assets: MLAsset[]): string[] {
     const storage = new Set<string>();
@@ -190,7 +190,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todas las etiquetas de software únicas (libraries + frameworks)
+   * Extract all unique software tags (libraries + frameworks)
    */
   extractUniqueSoftware(assets: MLAsset[]): string[] {
     const software = new Set<string>();
@@ -202,7 +202,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los Asset Sources únicos (Local Asset, External Asset)
+   * Extract all unique asset sources (Local Asset, External Asset)
    */
   extractUniqueAssetSources(assets: MLAsset[]): string[] {
     const sources = new Set<string>();
@@ -214,7 +214,7 @@ export class MlAssetsService {
   }
 
   /**
-   * Extrae todos los Formats únicos de los assets
+   * Extract all unique formats from assets
    */
   extractUniqueFormats(assets: MLAsset[]): string[] {
     const formats = new Set<string>();

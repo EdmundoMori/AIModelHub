@@ -1,60 +1,60 @@
-# 🚀 Guía de Despliegue - IAModelHub
+# 🚀 Deployment Guide - IAModelHub
 
-Reorganización de `CatalogModelIA_DS` con lógica y UI separadas. Esta guía describe cómo desplegar el sistema ML Assets Catalog con la nueva estructura.
+Reorganization of `CatalogModelIA_DS` with separated logic and UI. This guide explains how to deploy the IA Assets Catalog with the new structure.
 
 ---
 
-## 📋 Requisitos Previos
+## 📋 Prerequisites
 
-| Componente | Versión Mínima | Verificar |
-|------------|----------------|-----------|
+| Component | Minimum Version | Check |
+|-----------|-----------------|-------|
 | **Docker** | 20.10+ | `docker --version` |
 | **Node.js** | 18+ | `node --version` |
 | **npm** | 9+ | `npm --version` |
 | **Git** | 2.0+ | `git --version` |
 
-**Recursos mínimos recomendados:**
+Recommended resources:
 - CPU: 2 cores
 - RAM: 4 GB
-- Disco: 10 GB libres
+- Disk: 10 GB free
 
 ---
 
-## ⚡ Despliegue Automático (Recomendado)
+## ⚡ Automated Deployment (Recommended)
 
-### Opción 1: Script Completo
+### Option 1: Single Script
 
 ```bash
-# 1. Preparar carpeta del proyecto
+# 1. Go to the project
 cd IAModelHub
 
-# 2. Ejecutar script de despliegue
-./deploy.sh   # Asegúrate de tener permisos para usar Docker (usuario en grupo docker o sudo)
+# 2. Run the deployment script
+./deploy.sh   # Ensure you can use Docker (user in docker group or sudo)
 ```
 
-**El script automáticamente:**
-- ✅ Verifica dependencias
-- ✅ Detiene servicios existentes
-- ✅ Inicia PostgreSQL + MinIO en Docker
-- ✅ Restaura base de datos completa (estructura + datos)
-- ✅ Configura bucket MinIO
-- ✅ Instala dependencias npm
-- ✅ Inicia backend (EDC + API)
-- ✅ Inicia frontend (Angular)
+The script automatically:
+- ✅ Checks dependencies
+- ✅ Stops existing services
+- ✅ Starts PostgreSQL + MinIO in Docker
+- ✅ Restores the full database (schema + data)
+- ✅ Configures the MinIO bucket
+- ✅ Installs npm dependencies
+- ✅ Starts backend (EDC + API)
+- ✅ Starts frontend (Angular)
 
-**Tiempo estimado:** 3-5 minutos
+Estimated time: 3-5 minutes
 
 ---
 
-## 🔧 Despliegue Manual
+## 🔧 Manual Deployment
 
-### Paso 1: Ubicarse en el proyecto
+### Step 1: Enter the project
 
 ```bash
 cd IAModelHub
 ```
 
-### Paso 2: Iniciar Infraestructura Docker
+### Step 2: Start Docker infrastructure
 
 ```bash
 # PostgreSQL
@@ -77,33 +77,33 @@ docker run -d \
   minio/minio:latest server /data --console-address ":9001"
 ```
 
-### Paso 3: Inicializar Base de Datos
+### Step 3: Initialize the database
 
-**Opción A: Con datos de ejemplo** (recomendado)
+**Option A: With sample data (recommended)**
 ```bash
 docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
   < IAModelHub_Extensiones/database/full-backup.sql
 ```
 
-Incluye:
-- 2 usuarios (demo123, edmundo123)
-- 13 assets ML
-- 10 registros de metadata ML
+Includes:
+- 2 users (user1123, user2123)
+- 13 IA assets
+- 10 ML metadata records
 
-**Opción B: Solo estructura**
+**Option B: Schema only**
 ```bash
 docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
   < IAModelHub_Extensiones/database/init-database.sql
 ```
 
-### Paso 4: Configurar MinIO
+### Step 4: Configure MinIO
 
 ```bash
-# Crear bucket
+# Create bucket
 docker exec ml-assets-minio mkdir -p /data/ml-assets
 ```
 
-### Paso 5: Instalar Dependencias
+### Step 5: Install dependencies
 
 ```bash
 # Backend
@@ -115,7 +115,7 @@ cd ../../IAModelHub_EDCUI/ml-browser-app
 npm install
 ```
 
-### Paso 6: Iniciar Servicios
+### Step 6: Start services
 
 **Terminal 1 - Backend:**
 ```bash
@@ -129,147 +129,147 @@ cd IAModelHub_EDCUI/ml-browser-app
 npm run start
 ```
 
-> ℹ️ Nota: Los chequeos de salud contra `localhost` (por ejemplo `curl http://localhost:3000/health`) pueden requerir permisos elevados si tu entorno restringe llamadas locales.
+> ℹ️ Note: Health checks against `localhost` (for example `curl http://localhost:3000/health`) may require elevated permissions if your environment restricts local calls.
 
 ---
 
-## 🌐 URLs y Credenciales
+## 🌐 URLs and Credentials
 
-### Servicios
+### Services
 
-| Servicio | URL | Descripción |
-|----------|-----|-------------|
-| **Frontend** | http://localhost:4200 | Aplicación Angular |
-| **Backend API** | http://localhost:3000 | API EDC + Management |
-| **MinIO Console** | http://localhost:9001 | Interfaz web MinIO |
-| **PostgreSQL** | localhost:5432 | Base de datos |
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend** | http://localhost:4200 | Angular application |
+| **Backend API** | http://localhost:3000 | EDC + Management API |
+| **MinIO Console** | http://localhost:9001 | MinIO web console |
+| **PostgreSQL** | localhost:5432 | Database |
 
-### Credenciales por Defecto
+### Default credentials
 
-**Aplicación Web:**
+**Web application:**
 ```
-Usuario: user-conn-oeg-demo
-Password: demo123
+User: user-conn-user1-demo
+Password: user1123
 
-Usuario: user-conn-edmundo-demo  
-Password: edmundo123
+User: user-conn-user2-demo  
+Password: user2123
 ```
 
 **MinIO:**
 ```
-Usuario: minioadmin
+User: minioadmin
 Password: minioadmin123
 ```
 
 **PostgreSQL:**
 ```
-Usuario: ml_assets_user
+User: ml_assets_user
 Password: ml_assets_password
-Base de datos: ml_assets_db
+Database: ml_assets_db
 ```
 
 ---
 
-## ✅ Verificación
+## ✅ Verification
 
-### 1. Verificar Contenedores Docker
+### 1. Check Docker containers
 
 ```bash
 docker ps | grep ml-assets
 ```
 
-Debe mostrar 2 contenedores: `ml-assets-postgres` y `ml-assets-minio`
+Should show two containers: `ml-assets-postgres` and `ml-assets-minio`.
 
-### 2. Verificar Base de Datos
+### 2. Check database
 
 ```bash
 docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -c "\dt"
 ```
 
-Debe mostrar 9 tablas.
+Should show 9 tables.
 
-### 3. Verificar Backend
+### 3. Check backend
 
 ```bash
 curl http://localhost:3000/v3/assets
 ```
 
-Debe retornar JSON con assets.
+Should return JSON with assets.
 
-### 4. Verificar Frontend
+### 4. Check frontend
 
-Abrir http://localhost:4200 en navegador. Debe cargar la aplicación.
+Open http://localhost:4200 in the browser. The application should load.
 
-### 5. Prueba de Login
+### 5. Login test
 
-1. Ir a http://localhost:4200
-2. Login con `user-conn-oeg-demo` / `demo123`
-3. Debe acceder al catálogo de assets
+1. Go to http://localhost:4200  
+2. Login with `user-conn-user1-demo` / `user1123`  
+3. You should reach the assets catalog
 
 ---
 
-## 📦 Estructura de Archivos Clave
+## 📦 Key File Structure
 
 ```
 IAModelHub/
-├── deploy.sh                           # Script de despliegue automático
+├── deploy.sh                           # Automated deployment script
 ├── IAModelHub_Extensiones/
-│   ├── runtime-edc-backend/            # Backend EDC + API (symlink: backend)
-│   ├── database-scripts/               # Scripts SQL (init, backup) (symlink: database)
-│   ├── infra-docker/                   # Postgres + MinIO (symlink: docker-compose.yml)
-│   └── model-serving/                  # Servidor HTTP de modelos (Python) (symlink: model-server)
+│   ├── backend/                        # EDC backend + API
+│   ├── database/                       # SQL scripts (init, backup)
+│   ├── docker-compose.yml              # Postgres + MinIO
+│   └── model-server/                   # Model HTTP server (Python)
 ├── IAModelHub_EDCUI/
-│   └── ui-model-browser/               # Frontend Angular (symlink: ml-browser-app)
-│       ├── src/                        # Código fuente Angular
-│       └── package.json                # Dependencias frontend
-├── CREDENTIALS.md                      # Todas las credenciales
+│   └── ml-browser-app/                 # Angular frontend
+│       ├── src/                        # Angular source
+│       └── package.json                # Frontend dependencies
+├── CREDENTIALS.md                      # All credentials
 └── DEPLOYMENT.md
 ```
 
 ---
 
-## 🔄 Backup y Restauración
+## 🔄 Backup and Restore
 
-### Crear Backup Completo
+### Create full backup
 
 ```bash
-# Backup con datos
+# Database backup with data
 docker exec ml-assets-postgres pg_dump -U ml_assets_user -d ml_assets_db \
   --clean --if-exists --inserts > backup-$(date +%Y%m%d).sql
 
-# Backup de archivos MinIO
+# MinIO files backup
 docker exec ml-assets-minio tar czf /tmp/minio-backup.tar.gz /data/ml-assets
 docker cp ml-assets-minio:/tmp/minio-backup.tar.gz ./
 ```
 
-### Restaurar Backup
+### Restore backup
 
 ```bash
-# Restaurar base de datos
+# Restore database
 docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
   < backup-20251212.sql
 
-# Restaurar archivos MinIO
+# Restore MinIO files
 docker cp minio-backup.tar.gz ml-assets-minio:/tmp/
 docker exec ml-assets-minio tar xzf /tmp/minio-backup.tar.gz -C /
 ```
 
 ---
 
-## 🛑 Detener Servicios
+## 🛑 Stop services
 
 ```bash
-# Detener aplicaciones (si usaste deploy.sh)
+# Stop applications (if you used deploy.sh)
 kill $(pgrep -f "server-edc.js")
 kill $(pgrep -f "ng serve")
 
-# Detener Docker
+# Stop Docker
 docker stop ml-assets-postgres ml-assets-minio
 
-# Eliminar contenedores (mantiene datos)
+# Remove containers (keep data)
 docker rm ml-assets-postgres ml-assets-minio
 
-# Eliminar TODO incluyendo datos (CUIDADO)
+# Remove everything including data (CAUTION)
 docker rm -f ml-assets-postgres ml-assets-minio
 docker volume rm ml-assets-postgres-data ml-assets-minio-data
 ```
@@ -278,103 +278,58 @@ docker volume rm ml-assets-postgres-data ml-assets-minio-data
 
 ## 🐛 Troubleshooting
 
-### Error: "Puerto 5432 en uso"
+### Error: "Port 5432 in use"
 
 ```bash
-# Ver qué proceso usa el puerto
+# See which process uses the port
 sudo lsof -i :5432
 
-# Cambiar puerto en deploy.sh o comando docker
--p 5433:5432  # Usar puerto 5433 en host
+# Change port in deploy.sh or docker command
+-p 5433:5432  # use 5433 on host
 ```
 
 ### Error: "Cannot connect to database"
 
 ```bash
-# Verificar que PostgreSQL está listo
+# Check PostgreSQL readiness
 docker exec ml-assets-postgres pg_isready -U ml_assets_user
 
-# Ver logs
+# View logs
 docker logs ml-assets-postgres
 ```
 
-### Error: "Frontend no compila"
+### Error: "Frontend does not compile"
 
 ```bash
-# Limpiar cache npm
+# Clean npm cache
 cd IAModelHub_EDCUI/ml-browser-app
 rm -rf node_modules package-lock.json
 npm install
 
-# Verificar versión Node.js
-node --version  # Debe ser 18+
+# Check Node.js version
+node --version  # should be 18+
 ```
 
-### Error: "Backend no inicia"
+### Error: "Backend does not start"
 
 ```bash
-# Ver logs
+# View logs
 cat IAModelHub_Extensiones/backend/server.log
 
-# Verificar que PostgreSQL está corriendo
+# Check PostgreSQL is running
 docker ps | grep postgres
 
-# Probar conexión manual
+# Test manual connection
 docker exec -it ml-assets-postgres psql -U ml_assets_user -d ml_assets_db
 ```
 
 ---
 
-## 🔐 Seguridad para Producción
+## 🔐 Production security
 
-**⚠️ IMPORTANTE:** Las credenciales por defecto son para desarrollo. En producción:
+Default credentials are for development. In production:
 
-1. **Cambiar passwords de base de datos:**
-```bash
-# Generar nuevo hash
-node IAModelHub_Extensiones/database/generate-password-hash.js "newSecurePass123!"
-
-# Actualizar en BD
-docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db <<EOF
-UPDATE users SET password_hash = '\$2a\$10$...' WHERE username = 'user-conn-oeg-demo';
-EOF
-```
-
-2. **Cambiar credenciales MinIO:**
-```bash
-docker run ... -e MINIO_ROOT_USER=admin -e MINIO_ROOT_PASSWORD=SecurePass123! ...
-```
-
-3. **Cambiar password PostgreSQL:**
-```bash
-docker run ... -e POSTGRES_PASSWORD=SecureDBPass123! ...
-```
-
-4. **Usar variables de entorno:**
-```bash
-export DB_PASSWORD="SecureDBPass123!"
-export MINIO_PASSWORD="SecureMinIOPass!"
-```
-
----
-
-## 📚 Documentación Adicional
-
-- **[CREDENTIALS.md](./CREDENTIALS.md)** - Todas las credenciales del sistema
-- **[IAModelHub_Extensiones/database/README.md](./IAModelHub_Extensiones/database/README.md)** - Gestión de base de datos
-- **[README.md](./README.md)** - Documentación general del proyecto
-
----
-
-## ✨ Resumen de 3 Comandos
-
-```bash
-cd IAModelHub
-./deploy.sh
-```
-
-**Resultado:** Sistema completo funcionando en 3-5 minutos.
-
-- Frontend: http://localhost:4200
-- Backend: http://localhost:3000
-- Login: `user-conn-oeg-demo` / `demo123`
+1. Change database passwords.
+2. Change MinIO passwords.
+3. Rotate web users and API keys.
+4. Use environment variables or a secrets manager.

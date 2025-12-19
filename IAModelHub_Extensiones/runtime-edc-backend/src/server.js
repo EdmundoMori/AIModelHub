@@ -1242,7 +1242,7 @@ app.post('/v3/catalog/request/count', optionalAuth, async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`ML Assets Backend running on port ${PORT}`);
+  console.log(`IA Assets Backend running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`PostgreSQL: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
   console.log(`MinIO S3: ${process.env.S3_ENDPOINT}`);

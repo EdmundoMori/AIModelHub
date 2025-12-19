@@ -13,8 +13,8 @@ async function testPasswords() {
   const result = await pool.query('SELECT username, password_hash FROM users');
   
   const passwords = {
-    'user-conn-oeg-demo': 'a!ulzZ5dJvLJSzvM',
-    'user-conn-edmundo-demo': 'D1S*ty@!UFTmr6U^'
+    'user-conn-user1-demo': 'user1123',
+    'user-conn-user2-demo': 'user2123'
   };
   
   console.log('Testing passwords...\n');

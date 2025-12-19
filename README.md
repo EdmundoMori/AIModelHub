@@ -1,38 +1,38 @@
 # IAModelHub
 
-Plataforma de gestión de modelos de IA con runtime EDC-Style en Node.js y frontend Angular para explorar, registrar y operar assets de ML con almacenamiento S3 y metadata avanzada.
+AI model management platform with an EDC-style runtime in Node.js and an Angular frontend to explore, register, and operate IA assets with S3 storage and rich metadata.
 
-## Estado del proyecto
+## Project status
 
-Primera entrega funcional del ciclo de gestión de modelos de IA en espacios de datos: ya permite registrar y descubrir modelos, crear políticas y contratos EDC-style, y habilitar negociaciones entre proveedores y consumidores tanto para consumo como servicio o descarga directa desde almacenamiento S3. La siguiente fase incorporará ejecución y evaluación de modelos dentro del espacio de datos, completando el ciclo de comparación y scoring.
+First functional delivery of the AI model lifecycle for data spaces: it already supports registering and discovering models, creating EDC-style policies and contracts, and enabling negotiations between providers and consumers for service-based usage or direct download from S3 storage. The next phase will add model execution and evaluation within the data space to complete comparison and scoring.
 
-## Contenido
+## Contents
 
-- Descripción general y características
-- Estructura del repositorio
-- Requisitos y dependencias
-- Instalación y compilación
-- Uso con ejemplos
-- Contribución
-- Agradecimientos y financiación
-- Autores y licencia
+- Overview and features
+- Repository structure
+- Requirements and dependencies
+- Installation and build
+- Usage with examples
+- Contribution
+- Acknowledgments and funding
+- Authors and license
 
-## Características principales
+## Main features
 
-- Backend EDC-compatible en Node.js con extensiones modularizadas (gestión de assets, metadata ML, S3, autenticación).
-- Frontend Angular 17 para navegación, creación y detalle de assets.
-- Base de datos PostgreSQL + MinIO S3 para artefactos.
-- Scripts listos para despliegue local y restauración de datos de ejemplo.
+- EDC-compatible backend in Node.js with modular extensions (asset management, ML metadata, S3, authentication).
+- Angular 17 frontend for browsing, creating, and detailing assets.
+- PostgreSQL + MinIO S3 for metadata and artifacts.
+- Ready-to-use scripts for local deployment and sample data restore.
 
-## Estructura del repositorio
+## Repository structure
 
 ```
 IAModelHub/
-├── deploy.sh                       # Despliegue automatizado
-├── IAModelHub_Extensiones/         # Lógica y servicios (symlinks mantienen rutas previas)
-│   ├── runtime-edc-backend/        # Backend EDC + API (symlink: backend)
+├── deploy.sh                       # Automated deployment
+├── IAModelHub_Extensiones/         # Logic and services (symlinks keep previous paths)
+│   ├── runtime-edc-backend/        # EDC backend + API (symlink: backend)
 │   ├── database-scripts/           # SQL init/backup (symlink: database)
-│   ├── model-serving/              # Servidor HTTP de modelos (symlink: model-server)
+│   ├── model-serving/              # Model HTTP server (symlink: model-server)
 │   └── infra-docker/               # Docker Compose (symlink: docker-compose.yml)
 ├── IAModelHub_EDCUI/               # Interfaces
 │   └── ui-model-browser/           # Angular UI (symlink: ml-browser-app)
@@ -40,23 +40,23 @@ IAModelHub/
 └── README.md
 ```
 
-## Requisitos y dependencias
+## Requirements and dependencies
 
-- Docker y Docker Compose (para PostgreSQL + MinIO).
-- Node.js 18+ y npm 10+.
-- Python 3 (opcional, para `model-serving`).
+- Docker and Docker Compose (PostgreSQL + MinIO).
+- Node.js 18+ and npm 10+.
+- Python 3 (optional, for `model-serving`).
 
-## Instalación y compilación
+## Installation and build
 
 ```bash
-# 1) Entrar al proyecto
+# 1) Enter the project
 cd IAModelHub
 
-# 2) Despliegue automatizado (requiere permisos Docker)
+# 2) Automated deployment (requires Docker permissions)
 ./deploy.sh
 
-# 3) Manual (resultado equivalente a ./deploy.sh)
-# Infraestructura (PostgreSQL + MinIO)
+# 3) Manual (equivalent result to ./deploy.sh)
+# Infrastructure (PostgreSQL + MinIO)
 cd IAModelHub_Extensiones
 docker compose up -d
 
@@ -70,36 +70,36 @@ cd ../../IAModelHub_EDCUI/ui-model-browser
 npm install
 nohup npm run start > ../../frontend.log 2>&1 &
 
-# Verificación
+# Verification
 curl http://localhost:3000/health
 ```
 
-## Uso con ejemplos
+## Usage with examples
 
-- Backend salud: `curl http://localhost:3000/health`
-- Listar assets: `curl -X POST http://localhost:3000/v3/assets/request -H "Authorization: Bearer <token>"`
-- Frontend: abrir `http://localhost:4200`
-  - Usuario 1: `user-conn-oeg-demo / demo123`
-  - Usuario 2: `user-conn-edmundo-demo / edmundo123`
+- Backend health: `curl http://localhost:3000/health`
+- List assets: `curl -X POST http://localhost:3000/v3/assets/request -H "Authorization: Bearer <token>"`
+- Frontend: open `http://localhost:4200`
+  - User 1: `user-conn-user1-demo / user1123`
+  - User 2: `user-conn-user2-demo / user2123`
 - MinIO Console: `http://localhost:9001` (`minioadmin/minioadmin123`).
 
-## Contribución
+## Contribution
 
-1. Abrir issue con descripción clara.
-2. Hacer fork y crear rama (`feature/...` o `fix/...`).
-3. Enviar pull request con resumen, pasos de prueba y checklist de impactos.
+1. Open an issue with a clear description.
+2. Fork and create a branch (`feature/...` or `fix/...`).
+3. Submit a pull request with summary, test steps, and impact checklist.
 
-## Agradecimientos y financiación
+## Acknowledgments and funding
 
-- Inspirado en Eclipse Dataspace Components (EDC): extensiones de esta arquitectura para aplicarlas en cualquier espacio de datos.
-- Tecnologías base: Angular para UI, Express/Node.js para servicios, PostgreSQL para metadata, MinIO para artefactos S3.
-- Financiación: Proyecto PIONERA.
+- Inspired by Eclipse Dataspace Components (EDC): extensions of this architecture to apply it to any data space.
+- Base technologies: Angular for UI, Express/Node.js for services, PostgreSQL for metadata, MinIO for S3 artifacts.
+- Funding: PIONERA project.
 
-## Autores y contacto
+## Authors and contact
 
-- Mantenimiento principal: Edmundo Mori, Jiayun Liu.
-- Contacto: edmundo.mori.orrillo@upm.es, jiayun.liu@alumnos.upm.es.
+- Maintainers: Edmundo Mori, Jiayun Liu.
+- Contact: edmundo.mori.orrillo@upm.es, jiayun.liu@alumnos.upm.es.
 
-## Licencia
+## License
 
-Código licenciado bajo Apache 2.0. Ver `LICENSE` en el repositorio original.
+Code licensed under Apache 2.0. See `LICENSE` in the original repository.

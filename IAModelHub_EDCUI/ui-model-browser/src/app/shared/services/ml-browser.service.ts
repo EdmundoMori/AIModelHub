@@ -15,12 +15,12 @@ export class MlBrowserService {
   private readonly CATALOG_URL = `${environment.runtime.catalogUrl}`;
 
   /**
-   * Obtiene ML Assets desde Management API /assets/request Y desde Catalog Browser (federated catalog)
-   * Combina ambos resultados eliminando duplicados por @id
-   * Los assets locales vienen del conector, los del catálogo vienen de otros conectores
+   * Retrieves IA assets from Management API /assets/request and from the federated catalog.
+   * Combines both results, removing duplicates by @id.
+   * Local assets come from this connector; catalog assets come from other connectors.
    */
   getPaginatedMLAssets(): Observable<MLAsset[]> {
-    // Realizar ambas consultas en paralelo
+    // Execute both requests in parallel
     const localAssets$ = this.getLocalMLAssets();
     const catalogAssets$ = this.getCatalogMLAssets();
     
@@ -29,27 +29,27 @@ export class MlBrowserService {
         console.log('[ML Browser Service] Local assets:', localAssets.length);
         console.log('[ML Browser Service] Catalog assets:', catalogAssets.length);
         
-        // Combinar eliminando duplicados por @id
+        // Merge removing duplicates by @id
         const assetMap = new Map<string, MLAsset>();
         
-        // Agregar assets locales primero
+        // Add local assets first
         localAssets.forEach(asset => {
           assetMap.set(asset.id, { ...asset, originator: 'Local Connector' });
         });
         
-        // Agregar assets del catálogo (solo si no existen ya)
+        // Add catalog assets (only if they do not already exist)
         catalogAssets.forEach(asset => {
           if (!assetMap.has(asset.id)) {
             assetMap.set(asset.id, { 
               ...asset, 
               originator: 'Federated Catalog',
-              hasContractOffers: true // Assets del catálogo siempre tienen contract offers
+              hasContractOffers: true // Catalog assets always have contract offers
             });
           }
         });
         
         const uniqueAssets = Array.from(assetMap.values());
-        console.log('[ML Browser Service] Unique ML assets:', uniqueAssets.length);
+        console.log('[ML Browser Service] Unique IA assets:', uniqueAssets.length);
         
         return uniqueAssets;
       })
@@ -57,7 +57,7 @@ export class MlBrowserService {
   }
 
   /**
-   * Obtiene ML Assets locales desde Management API /assets/request
+   * Retrieves local IA assets from Management API /assets/request
    */
   private getLocalMLAssets(): Observable<MLAsset[]> {
     const url = `${this.BASE_URL}/v3/assets/request`;
@@ -80,7 +80,7 @@ export class MlBrowserService {
         console.log('[ML Browser Service] Parsed datasets:', datasets);
         console.log('[ML Browser Service] Dataset types:', datasets.map(d => ({ id: d.id, type: d.assetType })));
         
-        // Filtrar client-side por assetType=machineLearning OR deepLearning
+        // Client-side filter by assetType = machineLearning or deepLearning
         const mlAssets = datasets.filter(asset => {
           const isAI = asset.assetType === 'machineLearning' || 
                        asset.assetType === 'Machine Learning' ||
@@ -98,13 +98,13 @@ export class MlBrowserService {
   }
 
   /**
-   * Obtiene ML Assets desde Federated Catalog
-   * NOTA: Por ahora usa el mismo endpoint que assets locales
-   * En el futuro se conectará a un catálogo federado real
+   * Retrieves IA assets from federated catalog.
+   * NOTE: Currently uses the same endpoint as local assets.
+   * Future: connect to a real federated catalog service.
    */
   private getCatalogMLAssets(): Observable<MLAsset[]> {
-    // Por ahora retornamos un array vacío ya que no tenemos catálogo federado
-    // En el futuro esto se conectará a un servicio de catálogo federado real
+    // Currently returns empty array because no federated catalog is configured.
+    // Future: connect to actual federated catalog service.
     console.log('[ML Browser Service] Federated catalog not configured, returning empty array');
     return new Observable(observer => {
       observer.next([]);
@@ -113,7 +113,7 @@ export class MlBrowserService {
   }
 
   /**
-   * Cuenta el total de ML Assets
+   * Cuenta el total de IA Assets
    */
   count(): Observable<number> {
     return this.getPaginatedMLAssets().pipe(
@@ -144,12 +144,12 @@ export class MlBrowserService {
       const assetObj = asset as Record<string, unknown>;
       console.debug('[ML Browser] Processing asset:', assetObj);
 
-      // Soportar tanto formato EDC (edc:properties) como formato directo (properties)
+      // Support both EDC format (edc:properties) and direct format (properties)
       const properties = (assetObj['edc:properties'] || assetObj['properties'] || assetObj) as Record<string, unknown>;
       
       const id = String(assetObj['@id'] || properties['id'] || 'Unknown');
       
-      // Buscar name en múltiples ubicaciones
+      // Look for name in multiple locations
       const name = String(
         properties['asset:prop:name'] || 
         properties['name'] || 
@@ -157,7 +157,7 @@ export class MlBrowserService {
         'Untitled'
       );
       
-      // Buscar description
+      // Look for description
       const descriptionRaw = String(
         properties['asset:prop:description'] ||
         properties['http://purl.org/dc/terms/description'] || 
@@ -172,21 +172,21 @@ export class MlBrowserService {
         description
       );
       
-      // Buscar version
+      // Look for version
       const version = String(
         properties['asset:prop:version'] ||
         properties['version'] || 
         'N/A'
       );
       
-      // Buscar assetType - CRÍTICO para filtrar ML assets
+      // Look for assetType - CRITICAL to filter IA assets
       const assetType = String(
         properties['asset:prop:type'] ||
         properties['assetType'] || 
         'Unknown'
       );
       
-      // Buscar contentType
+      // Look for contentType
       const contentType = String(
         properties['asset:prop:contenttype'] ||
         properties['contenttype'] || 
@@ -194,7 +194,7 @@ export class MlBrowserService {
       );
       const contentTypeDisplay = contentType || 'Not available';
       
-      // Buscar byteSize
+      // Look for byteSize
       const byteSize = String(
         properties['asset:prop:byteSize'] ||
         properties['http://www.w3.org/ns/dcat#byteSize'] || 
@@ -202,14 +202,14 @@ export class MlBrowserService {
       );
       const byteSizeDisplay = byteSize || 'Not available';
       
-      // Buscar format
+      // Look for format
       const format = String(
         properties['asset:prop:format'] ||
         properties['http://purl.org/dc/terms/format'] || 
         'Unknown'
       );
       
-      // Buscar keywords
+      // Look for keywords
       let keywords: string[] = [];
       const keywordsRaw = properties['asset:prop:keywords'] || properties['http://www.w3.org/ns/dcat#keyword'];
       if (Array.isArray(keywordsRaw)) {
@@ -219,11 +219,11 @@ export class MlBrowserService {
         keywords = keywordsStr ? keywordsStr.split(',').map(k => k.trim()).filter(k => k) : [];
       }
 
-      // Buscar metadata de ML
+      // Look for ML metadata
       const mlMetadata = (properties['ml:metadata'] as Record<string, unknown>) || {};
       const assetData = (properties['assetData'] as Record<string, unknown>) || {};
       
-      // Buscar dataAddress con soporte para formato EDC
+      // Look for dataAddress with EDC format support
       const dataAddress = (
         assetObj['edc:dataAddress'] || 
         assetObj['dataAddress'] || 
@@ -239,13 +239,13 @@ export class MlBrowserService {
         ''
       );
 
-      // Extraer metadata de ML desde ml:metadata o assetData
+      // Extract ML metadata from ml:metadata or assetData
       const ontology = (assetData['JS_Pionera_Ontology'] as Record<string, unknown>) || {};
       const model = (ontology['model'] as Record<string, unknown>) || {};
       const software = (ontology['software'] as Record<string, unknown>) || {};
       const algorithm = (ontology['algorithm'] as Record<string, unknown>) || {};
 
-      // Tasks desde ml:metadata o model
+      // Tasks from ml:metadata or model
       const tasksValue = mlMetadata['task'] || model['tasks'] || '';
       const tasks = tasksValue ? (Array.isArray(tasksValue) ? tasksValue.map(t => String(t)) : [String(tasksValue)].filter(t => t)) : [];
       
@@ -309,7 +309,7 @@ export class MlBrowserService {
   }
 
   /**
-   * Parsea un dataset individual del catálogo federado
+   * Parse a single dataset from the federated catalog
    */
   private parseCatalogDataset(dataset: Record<string, unknown>, catalog: Record<string, unknown>): MLAsset {
     console.debug('[ML Browser] Processing catalog dataset:', dataset);

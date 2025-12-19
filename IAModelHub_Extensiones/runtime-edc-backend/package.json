@@ -1,7 +1,7 @@
 {
   "name": "ml-assets-backend",
   "version": "1.0.0",
-  "description": "Backend API for ML Assets management with MinIO and PostgreSQL",
+  "description": "Backend API for IA Assets management with MinIO and PostgreSQL",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

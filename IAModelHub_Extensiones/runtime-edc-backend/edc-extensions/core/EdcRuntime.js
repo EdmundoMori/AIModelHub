@@ -99,7 +99,7 @@ class EdcRuntime {
    */
   async start() {
     console.log('='.repeat(60));
-    console.log('  EDC-Compatible Runtime for IA/ML Assets');
+    console.log('  EDC-Compatible Runtime for IA/IA Assets');
     console.log('  Node.js Backend with Extension Architecture');
     console.log('='.repeat(60));
     

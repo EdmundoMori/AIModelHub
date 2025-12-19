@@ -86,16 +86,16 @@ export class LoginComponent {
    */
   loginAsOEG(): void {
     this.loginForm.patchValue({
-      username: 'user-conn-oeg-demo',
-      password: 'a!ulzZ5dJvLJSzvM'
+      username: 'user-conn-user1-demo',
+      password: 'user1123'
     });
     this.onSubmit();
   }
 
   loginAsEdmundo(): void {
     this.loginForm.patchValue({
-      username: 'user-conn-edmundo-demo',
-      password: 'D1S*ty@!UFTmr6U^'
+      username: 'user-conn-user2-demo',
+      password: 'user2123'
     });
     this.onSubmit();
   }

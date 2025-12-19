@@ -1,6 +1,6 @@
-# ML Assets Backend
+# IA Assets Backend
 
-Node.js/Express backend for ML Assets management with MinIO S3 storage and PostgreSQL metadata.
+Node.js/Express backend for IA Assets management with MinIO S3 storage and PostgreSQL metadata.
 
 ## Quick Start
 

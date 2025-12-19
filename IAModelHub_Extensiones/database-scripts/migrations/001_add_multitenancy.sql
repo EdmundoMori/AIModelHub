@@ -28,13 +28,13 @@ CREATE INDEX IF NOT EXISTS idx_assets_owner ON assets(owner);
 CREATE INDEX IF NOT EXISTS idx_upload_sessions_owner ON upload_sessions(owner);
 
 -- 5. Insert default users
--- Password for user-conn-oeg-demo: a!ulzZ5dJvLJSzvM
--- Password for user-conn-edmundo-demo: D1S*ty@!UFTmr6U^
+-- Password for user-conn-user1-demo: user1123
+-- Password for user-conn-user2-demo: user2123
 -- Using bcrypt hash with 10 rounds
 INSERT INTO users (username, password_hash, connector_id, display_name, is_active)
 VALUES 
-    ('user-conn-oeg-demo', '$2a$10$jpehZPX8ktWv0uhCeR709eCTBsKd/oq/8kTLysAjIeMAnuLfG9gkq', 'conn-oeg-demo', 'OEG Demo Connector', true),
-    ('user-conn-edmundo-demo', '$2a$10$joNPtd4jCygfci2EBA6GFeUjrT/McA8nAnvJuL6mfpc2ZN0Gcz2x6', 'conn-edmundo-demo', 'Edmundo Demo Connector', true)
+    ('user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-oeg-demo', 'OEG Demo Connector', true),
+    ('user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-edmundo-demo', 'Edmundo Demo Connector', true)
 ON CONFLICT (username) DO NOTHING;
 
 -- 6. Create view for assets with owner information

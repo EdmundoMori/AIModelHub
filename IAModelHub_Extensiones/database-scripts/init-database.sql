@@ -1,7 +1,7 @@
 -- ============================================================
 -- IAModelHub (CatalogModelIA_DS reorganization) - Database Initialization Script
 -- ============================================================
--- Purpose: Initialize PostgreSQL database for ML Assets Catalog
+-- Purpose: Initialize PostgreSQL database for IA Assets Catalog
 -- Database: ml_assets_db
 -- User: ml_assets_user
 -- Version: 1.0
@@ -46,7 +46,7 @@ COMMENT ON COLUMN users.password_hash IS 'bcrypt hashed password';
 
 -- ============================================================
 -- TABLE: assets
--- Purpose: Main table for ML assets metadata
+-- Purpose: Main table for IA assets metadata
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS assets (
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS assets (
     owner VARCHAR(100) DEFAULT 'conn-oeg-demo'
 );
 
-COMMENT ON TABLE assets IS 'Main table for ML assets metadata';
+COMMENT ON TABLE assets IS 'Main table for IA assets metadata';
 COMMENT ON COLUMN assets.owner IS 'Connector ID of the user who owns this asset (e.g., conn-oeg-demo)';
 
 -- ============================================================
@@ -293,14 +293,14 @@ COMMENT ON VIEW assets_with_owner IS 'Assets with owner user information';
 -- ============================================================
 
 -- Insert default users (passwords are hashed with bcrypt)
--- Password for user-conn-oeg-demo: demo123
--- Password for user-conn-edmundo-demo: edmundo123
+-- Password for user-conn-user1-demo: user1123
+-- Password for user-conn-user2-demo: user2123
 -- IMPORTANT: Change these passwords in production environments!
 
 INSERT INTO users (username, password_hash, connector_id, display_name, email)
 VALUES 
-    ('user-conn-oeg-demo', '$2a$10$aHQt0HNWrrCd4cRby26RKudAnanWNx9ZknsaJirTWJF1MMV20Z/gq', 'conn-oeg-demo', 'OEG Demo User', 'demo@oeg.fi.upm.es'),
-    ('user-conn-edmundo-demo', '$2a$10$UofjPeL7Zy0295THvlrHlO5H/wOVp7.5U5DYeNniWJzRv2fKH0ph6', 'conn-edmundo-demo', 'Edmundo Demo User', 'edmundo@demo.com')
+    ('user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-oeg-demo', 'OEG Demo User', 'demo@oeg.fi.upm.es'),
+    ('user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-edmundo-demo', 'Edmundo Demo User', 'edmundo@demo.com')
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
@@ -327,4 +327,4 @@ ORDER BY table_name;
 -- END OF INITIALIZATION SCRIPT
 -- ============================================================
 
-COMMENT ON DATABASE ml_assets_db IS 'ML Assets Catalog Database for EDC Connector - IAModelHub Project';
+COMMENT ON DATABASE ml_assets_db IS 'IA Assets Catalog Database for EDC Connector - IAModelHub Project';

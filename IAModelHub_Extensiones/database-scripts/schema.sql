@@ -61,7 +61,7 @@ CREATE TABLE public.assets (
 -- Name: TABLE assets; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.assets IS 'Main table for ML assets metadata';
+COMMENT ON TABLE public.assets IS 'Main table for IA assets metadata';
 
 
 --

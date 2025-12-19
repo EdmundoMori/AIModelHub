@@ -61,7 +61,7 @@ services:
     networks:
       - ml-assets-network
 
-  # Backend API Server for ML Assets
+  # Backend API Server for IA Assets
   backend:
     build:
       context: ./backend

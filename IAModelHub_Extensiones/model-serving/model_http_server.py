@@ -1,6 +1,6 @@
 """
 Simple HTTP Server for ML Model Files
-Expone modelos de ML a través de endpoints HTTP con autenticación básica
+Exposes ML models through HTTP endpoints with basic authentication.
 """
 import os
 import hashlib
@@ -10,17 +10,17 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import base64
 
-# ============ CONFIGURACIÓN ============
-SERVER_HOST = '0.0.0.0'  # Escucha en todas las interfaces
+# ============ CONFIGURATION ============
+SERVER_HOST = '0.0.0.0'  # Listen on all interfaces
 SERVER_PORT = 8080
 
-# Directorio donde están tus modelos
+# Directory where models are stored
 MODEL_BASE_PATH = '/home/edmundo/IAModelHub/IAModelHub_Extensiones/model-server/models'
 
-# Autenticación simple (API Key)
-API_KEY = 'ml-model-key-2024'  # Cámbialo por uno seguro
+# Simple authentication (API Key)
+API_KEY = 'ml-model-key-2024'  # Change to a secure value
 
-# Modelos disponibles - registra tus modelos aquí
+# Available models - register your models here
 AVAILABLE_MODELS = {
     'iris-classifier-v1': {
         'path': 'iris_classifier.pkl',
@@ -28,23 +28,23 @@ AVAILABLE_MODELS = {
         'content_type': 'application/octet-stream',
         'description': 'Iris Random Forest Classifier',
         'version': '1.0',
-        'size_bytes': None  # Se calculará automáticamente
+        'size_bytes': None  # Will be calculated automatically
     },
-    # Ejemplo para tu modelo LGBM (cuando quieras agregarlo):
+    # Example for your LGBM model (when you want to add it):
     # 'lgbm-classifier-1': {
     #     'path': 'path/to/LGBM_Classifier_1.pkl',
-    #     'metadata_path': 'path/to/lgbm_metadata.json',  # Crea metadata similar
+    #     'metadata_path': 'path/to/lgbm_metadata.json',  # Create similar metadata
     #     'content_type': 'application/octet-stream',
     #     'description': 'LGBM Classifier Model v1',
     #     'version': '1.0'
     # }
 }
 
-# ============ SERVIDOR HTTP ============
+# ============ HTTP SERVER ============
 class ModelHTTPHandler(BaseHTTPRequestHandler):
     
     def _set_headers(self, status=200, content_type='application/json'):
-        """Establece headers HTTP con CORS"""
+        """Set HTTP headers with CORS"""
         self.send_response(status)
         self.send_header('Content-Type', content_type)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -53,13 +53,13 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def _authenticate(self):
-        """Verifica autenticación mediante API Key"""
-        # Verifica header X-API-Key
+        """Check authentication via API Key"""
+        # Check X-API-Key header
         api_key = self.headers.get('X-API-Key')
         if api_key == API_KEY:
             return True
         
-        # Verifica Authorization: Bearer token
+        # Check Authorization: Bearer token
         auth_header = self.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
@@ -69,7 +69,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
         return False
     
     def _get_file_info(self, file_path):
-        """Obtiene información del archivo"""
+        """Get file information"""
         if not os.path.exists(file_path):
             return None
         
@@ -81,11 +81,11 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
         }
     
     def do_OPTIONS(self):
-        """Maneja preflight CORS"""
+        """Handle CORS preflight"""
         self._set_headers(204)
     
     def do_GET(self):
-        """Maneja peticiones GET"""
+        """Handle GET requests"""
         parsed = urlparse(self.path)
         path = parsed.path
         
@@ -100,7 +100,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response).encode())
             return
         
-        # Endpoint: GET /models - Lista modelos disponibles
+        # Endpoint: GET /models - List available models
         if path == '/models':
             self._set_headers()
             models_info = {}
@@ -124,9 +124,9 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response, indent=2).encode())
             return
         
-        # Endpoint: GET /download/{model_id} - Descarga modelo
+        # Endpoint: GET /download/{model_id} - Download model
         if path.startswith('/download/'):
-            # Verificar autenticación
+            # Verify authentication
             if not self._authenticate():
                 self._set_headers(401)
                 self.wfile.write(json.dumps({
@@ -135,7 +135,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
                 }).encode())
                 return
             
-            # Obtener model_id
+            # Get model_id
             model_id = path.split('/download/')[1].split('?')[0]
             
             if model_id not in AVAILABLE_MODELS:
@@ -157,7 +157,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
                 }).encode())
                 return
             
-            # Leer y enviar archivo
+            # Read and send file
             try:
                 with open(full_path, 'rb') as f:
                     file_data = f.read()
@@ -180,7 +180,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
                 }).encode())
             return
         
-        # Endpoint: GET /metadata/{model_id} - Obtiene metadata del modelo
+        # Endpoint: GET /metadata/{model_id} - Get model metadata
         if path.startswith('/metadata/'):
             model_id = path.split('/metadata/')[1]
             
@@ -193,7 +193,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
             full_path = os.path.join(MODEL_BASE_PATH, model_config['path'])
             file_info = self._get_file_info(full_path)
             
-            # Cargar metadata JSON si existe
+            # Load metadata JSON if present
             model_metadata = None
             if 'metadata_path' in model_config:
                 metadata_file = os.path.join(MODEL_BASE_PATH, model_config['metadata_path'])
@@ -218,7 +218,7 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
                 }
             }
             
-            # Agregar metadata del modelo si está disponible
+            # Add model metadata if available
             if model_metadata:
                 metadata['model_metadata'] = model_metadata
             
@@ -239,12 +239,12 @@ class ModelHTTPHandler(BaseHTTPRequestHandler):
         }).encode())
     
     def log_message(self, format, *args):
-        """Override para logging personalizado"""
+        """Override for custom logging"""
         print(f"[{self.log_date_time_string()}] {format % args}")
 
 
 def main():
-    """Inicia el servidor HTTP"""
+    """Start the HTTP server"""
     print("=" * 60)
     print("  ML Model HTTP Server")
     print("=" * 60)

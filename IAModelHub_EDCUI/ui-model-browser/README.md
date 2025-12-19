@@ -1,60 +1,60 @@
 # ML Models Browser
 
-Componente standalone de Angular 17 para explorar, gestionar y crear assets de Machine Learning en un espacio de datos basado en Eclipse Dataspace Connector (EDC).
+Standalone Angular 17 component to explore, manage, and create Machine Learning assets in a data space based on Eclipse Dataspace Connector (EDC).
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-- [Características](#características)
-- [Requisitos Previos](#requisitos-previos)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Uso](#uso)
-- [Desarrollo](#desarrollo)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Development](#development)
 - [Testing](#testing)
-- [Arquitectura](#arquitectura)
-- [Integración EDC](#integración-edc)
+- [Architecture](#architecture)
+- [EDC Integration](#edc-integration)
 
-## ✨ Características
+## ✨ Features
 
-### Gestión de Assets ML
-- **Browser de ML Assets**: Visualización en grid/lista de modelos de Machine Learning
-- **Creación de Assets**: Formulario completo con validación para crear nuevos assets ML
-- **Detalles de Asset**: Vista detallada de cada asset con toda su metadata
-- **Filtros avanzados**: Por tipo de storage, formato, task ML, etc.
+### ML Asset Management
+- **IA Assets Browser**: Grid/list view of Machine Learning models
+- **Asset Creation**: Full form with validation to create new IA assets
+- **Asset Details**: Detailed view of each asset with all metadata
+- **Advanced Filters**: By storage type, format, ML task, etc.
 
-### Metadata ML (JS_Pionera_Ontology)
-- **Vocabulario Dinámico**: Carga de opciones desde JSON-LD
-- **7 Campos ML**:
-  - Task (10 opciones)
-  - Subtask (25 opciones)
-  - Algorithm (27 opciones)
-  - Library (19 opciones)
-  - Framework (12 opciones)
-  - Software (21 opciones)
-  - Format (15 opciones)
+### ML Metadata (JS_Pionera_Ontology)
+- **Dynamic Vocabulary**: Loads options from JSON-LD
+- **7 ML Fields**:
+  - Task (10 options)
+  - Subtask (25 options)
+  - Algorithm (27 options)
+  - Library (19 options)
+  - Framework (12 options)
+  - Software (21 options)
+  - Format (15 options)
 
-### Navegación y UI
-- **Layout Responsive**: Sidebar con menú, toolbar superior
-- **4 Secciones**: ML Assets Browser, Create ML Asset, Catalog, Contracts
-- **Material Design**: Angular Material 17 con tema personalizado
+### Navigation and UI
+- **Responsive Layout**: Sidebar menu, top toolbar
+- **4 Sections**: IA Assets Browser, Create ML Asset, Catalog, Contracts
+- **Material Design**: Angular Material 17 with custom theme
 
-## 📦 Requisitos Previos
+## 📦 Prerequisites
 
 - Node.js >= 18.x
 - npm >= 9.x
 - Angular CLI 17.x
-- EDC Connector running
+- Running EDC Connector
 
-## 🚀 Instalación
+## 🚀 Installation
 
 ```bash
 cd IAModelHub/IAModelHub_EDCUI/ml-browser-app
 npm install
 ```
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-Editar `src/environments/environment.ts`:
+Edit `src/environments/environment.ts`:
 
 ```typescript
 export const environment = {
@@ -66,29 +66,29 @@ export const environment = {
 };
 ```
 
-## 🎯 Uso
+## 🎯 Usage
 
-### Desarrollo
+### Development
 
 ```bash
 npm start
-# Abre http://localhost:4200
+# Open http://localhost:4200
 ```
 
-### Producción
+### Production
 
 ```bash
 npm run build
-# Archivos en dist/ml-browser-app/
+# Files in dist/ml-browser-app/
 ```
 
 ## 🧪 Testing
 
 ```bash
-npm test                 # Tests unitarios
-npm run test:coverage   # Con cobertura
+npm test                 # Unit tests
+npm run test:coverage    # With coverage
 ```
 
-## 📝 Documentación Completa
+## 📝 Full Documentation
 
-Ver `README.md` original para documentación extendida.
+See the original `README.md` for extended documentation.

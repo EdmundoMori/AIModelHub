@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ML Assets Browser - Quick Start Script
+# IA Assets Browser - Quick Start Script
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -8,7 +8,7 @@ EXT_DIR="$PROJECT_ROOT/IAModelHub_Extensiones"
 COMPOSE_FILE="$EXT_DIR/docker-compose.yml"
 
 echo "========================================="
-echo "  ML Assets Browser - Full Stack Setup  "
+echo "  IA Assets Browser - Full Stack Setup  "
 echo "========================================="
 echo ""
 

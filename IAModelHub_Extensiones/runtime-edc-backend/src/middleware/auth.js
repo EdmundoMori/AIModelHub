@@ -1,5 +1,5 @@
 // Authentication Middleware
-// JWT-based authentication for multi-tenant ML Assets API
+// JWT-based authentication for multi-tenant IA Assets API
 
 const jwt = require('jsonwebtoken');
 

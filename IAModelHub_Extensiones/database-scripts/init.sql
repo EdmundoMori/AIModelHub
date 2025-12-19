@@ -1,7 +1,7 @@
--- ML Assets Database Schema
+-- IA Assets Database Schema
 -- Compatible with EDC (Eclipse Dataspace Components) and ML Metadata
 
--- Create tables for ML Assets Management
+-- Create tables for IA Assets Management
 CREATE TABLE IF NOT EXISTS assets (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(500) NOT NULL,
@@ -140,7 +140,7 @@ FROM assets a
 LEFT JOIN ml_metadata m ON a.id = m.asset_id
 LEFT JOIN data_addresses da ON a.id = da.asset_id;
 
-COMMENT ON TABLE assets IS 'Main table for ML assets metadata';
+COMMENT ON TABLE assets IS 'Main table for IA assets metadata';
 COMMENT ON TABLE ml_metadata IS 'ML-specific metadata from JS_Pionera_Ontology';
 COMMENT ON TABLE data_addresses IS 'Storage configuration for assets (HTTP, S3, InesDataStore)';
 COMMENT ON TABLE upload_sessions IS 'Tracking chunked file uploads to MinIO';

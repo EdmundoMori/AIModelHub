@@ -10,7 +10,7 @@ export interface MLAsset {
   format: string;
   keywords: string[];
   
-  // Campos específicos de ML (extraídos de assetData)
+  // ML-specific fields (from assetData)
   tasks: string[];
   subtasks: string[];
   algorithms: string[];
@@ -18,21 +18,21 @@ export interface MLAsset {
   frameworks: string[];
   modelType: string;
 
-  // Información de almacenamiento (extraída de dataAddress)
+  // Storage information (from dataAddress)
   storageType?: string;
   fileName?: string;
   
-  // Multi-tenancy: owner y local/external indicator
-  owner?: string; // Connector ID del propietario (e.g., 'conn-oeg-demo')
-  isLocal?: boolean; // true si el asset pertenece al usuario autenticado
+  // Multi-tenancy: owner and local/external indicator
+  owner?: string; // Connector ID of the owner (e.g., 'conn-oeg-demo')
+  isLocal?: boolean; // true if the asset belongs to the authenticated user
   
-  // Información de contrato
+  // Contract information
   hasContractOffers?: boolean;
   contractOffers?: unknown[];
   endpointUrl?: string;
   participantId?: string;
   
-  // Datos completos
+  // Full data
   assetData: Record<string, unknown>;
   rawProperties: Record<string, unknown>;
   originator: string; // 'Local Connector' or 'Federated Catalog'

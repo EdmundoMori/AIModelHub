@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script para registrar el modelo Iris HTTP con documentación de variables
+# Script to register the Iris HTTP model with documented variables
 
 set -e
 
@@ -8,40 +8,40 @@ EDC_API_URL="http://localhost:3000"
 MODEL_SERVER_URL="http://localhost:8080"
 API_KEY="ml-model-key-2024"
 
-# Credenciales EDC
-USERNAME="user-conn-oeg-demo"
-PASSWORD="a!ulzZ5dJvLJSzvM"
+# EDC credentials
+USERNAME="user-conn-user1-demo"
+PASSWORD="user1123"
 
 echo "================================================"
-echo "  Registro de Modelo Iris en EDC Connector"
+echo "  Iris Model Registration in EDC Connector"
 echo "================================================"
 
-# Obtener token
-echo "🔐 Obteniendo token..."
+# Get token
+echo "🔐 Getting token..."
 TOKEN=$(curl -s -X POST "${EDC_API_URL}/auth/login" \
     -H "Content-Type: application/json" \
     -d "{\"username\":\"${USERNAME}\",\"password\":\"${PASSWORD}\"}" | jq -r '.token')
 
 if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
-    echo "❌ Error: No se pudo obtener el token"
+    echo "❌ Error: Could not obtain token"
     exit 1
 fi
-echo "✓ Token obtenido"
+echo "✓ Token obtained"
 
-# Obtener metadata del modelo desde el servidor HTTP
+# Get model metadata from HTTP server
 echo ""
-echo "📦 Obteniendo metadata del modelo..."
+echo "📦 Fetching model metadata..."
 METADATA=$(curl -s "${MODEL_SERVER_URL}/metadata/iris-classifier-v1")
 INPUT_FEATURES=$(echo "$METADATA" | jq '.model_metadata.input_features')
 
-echo "✓ Metadata obtenida"
+echo "✓ Metadata fetched"
 echo ""
-echo "Variables de entrada del modelo:"
+echo "Model input variables:"
 echo "$INPUT_FEATURES" | jq -r '.[] | "  \(.position + 1). \(.name) (\(.type)) - \(.description)"'
 
-# Registrar asset
+# Register asset
 echo ""
-echo "📝 Registrando asset con HTTP Data..."
+echo "📝 Registering asset with HTTP Data..."
 
 ASSET_ID="iris-http-$(date +%s)"
 
@@ -83,16 +83,16 @@ RESPONSE=$(curl -s -X POST "${EDC_API_URL}/v3/assets" \
     }')
 
 if echo "$RESPONSE" | jq -e '.errors' > /dev/null 2>&1; then
-    echo "❌ Error al registrar asset:"
+    echo "❌ Error registering asset:"
     echo "$RESPONSE" | jq '.errors'
     exit 1
 fi
 
-echo "✓ Asset registrado: ${ASSET_ID}"
+echo "✓ Asset registered: ${ASSET_ID}"
 
-# Crear política
+# Create policy
 echo ""
-echo "📋 Creando política de acceso..."
+echo "📋 Creating access policy..."
 
 POLICY_ID="policy-iris-http-$(date +%s)"
 
@@ -109,11 +109,11 @@ curl -s -X POST "${EDC_API_URL}/v3/policydefinitions" \
         }
     }' > /dev/null
 
-echo "✓ Política creada: ${POLICY_ID}"
+echo "✓ Policy created: ${POLICY_ID}"
 
-# Crear contrato
+# Create contract
 echo ""
-echo "📜 Creando contrato..."
+echo "📜 Creating contract..."
 
 CONTRACT_ID="contract-iris-http-$(date +%s)"
 
@@ -133,23 +133,23 @@ curl -s -X POST "${EDC_API_URL}/v3/contractdefinitions" \
         ]
     }' > /dev/null
 
-echo "✓ Contrato creado: ${CONTRACT_ID}"
+echo "✓ Contract created: ${CONTRACT_ID}"
 
 echo ""
 echo "================================================"
-echo "  ✅ Registro completado exitosamente"
+echo "  ✅ Registration completed successfully"
 echo "================================================"
 echo ""
-echo "Detalles del asset:"
+echo "Asset details:"
 echo "  Asset ID: ${ASSET_ID}"
 echo "  Policy ID: ${POLICY_ID}"
 echo "  Contract ID: ${CONTRACT_ID}"
 echo ""
-echo "El modelo tiene documentadas 4 variables de entrada:"
+echo "Model documents 4 input variables:"
 echo "$INPUT_FEATURES" | jq -r '.[] | "  \(.position + 1). \(.name)"'
 echo ""
-echo "Próximos pasos:"
-echo "  1. Abre ML Assets Browser: http://localhost:4200/ml-assets"
-echo "  2. Busca: Iris Random Forest"
-echo "  3. Ve los detalles para ver las variables documentadas"
+echo "Next steps:"
+echo "  1. Open IA Assets Browser: http://localhost:4200/ml-assets"
+echo "  2. Search: Iris Random Forest"
+echo "  3. View details to see documented variables"
 echo ""

@@ -107,8 +107,8 @@ Stack: ${error.stack}`, 'error');
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username: 'user-conn-oeg-demo',
-                        password: 'a!ulzZ5dJvLJSzvM'
+                        username: 'user-conn-user1-demo',
+                        password: 'user1123'
                     })
                 });
 
@@ -130,15 +130,15 @@ Stack: ${error.stack}`, 'error');
 ✗ Stack: ${error.stack}
 
 POSIBLES CAUSAS:
-- Backend no está corriendo en puerto 3000
-- CORS bloqueando la petición
-- Network error o timeout`, 'error');
+- Backend not running on port 3000
+- CORS blocking the request
+- Network error or timeout`, 'error');
             }
         }
 
         // Auto-run test on load
         window.addEventListener('load', () => {
-            log('Página cargada. Haz click en los botones para probar.', 'info');
+            log('Page loaded. Click the buttons to test.', 'info');
         });
     </script>
 </body>

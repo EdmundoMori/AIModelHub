@@ -76,7 +76,7 @@ export class MlAssetsBrowserComponent implements OnInit {
   }
 
   loadMachinelearningAssets(): void {
-    console.log('[ML Browser Component] Starting to load ML assets...');
+    console.log('[ML Browser Component] Starting to load IA assets...');
     this.isLoading = true;
     this.isError = false;
 
@@ -105,7 +105,7 @@ export class MlAssetsBrowserComponent implements OnInit {
   }
 
   /**
-   * Actualiza los filtros disponibles basándose en todos los assets cargados
+   * Updates available filters based on all loaded assets
    */
   private updateAvailableFilters(): void {
     this.availableTasks = this.mlAssetsService.extractUniqueTasks(this.allAssets);
@@ -248,4 +248,3 @@ export class MlAssetsBrowserComponent implements OnInit {
     return 'No results';
   }
 }
-

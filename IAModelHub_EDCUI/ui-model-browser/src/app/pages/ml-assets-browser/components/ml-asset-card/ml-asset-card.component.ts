@@ -44,7 +44,7 @@ export class MlAssetCardComponent {
   }
 
   /**
-   * Acción del botón de contrato: CREATE CONTRACT para locales, NEGOTIATE para externos
+   * Contract button action: CREATE CONTRACT for local assets, NEGOTIATE for external
    */
   onContractAction(): void {
     if (this.isLocalAsset()) {
@@ -55,15 +55,15 @@ export class MlAssetCardComponent {
   }
 
   /**
-   * Determina si el asset es local o externo
-   * Usa el campo isLocal si está disponible, de lo contrario verifica el originator
+   * Determine whether the asset is local or external.
+   * Use isLocal if available, otherwise check originator.
    */
   isLocalAsset(): boolean {
-    // Si tenemos el campo isLocal del backend, usarlo
+    // If backend provided isLocal, use it
     if (this.asset.isLocal !== undefined) {
       return this.asset.isLocal;
     }
-    // Fallback al método anterior
+    // Fallback to originator check
     return this.asset.originator === 'Local Connector';
   }
 
@@ -90,4 +90,3 @@ export class MlAssetCardComponent {
     return this.asset.keywords.length;
   }
 }
-
