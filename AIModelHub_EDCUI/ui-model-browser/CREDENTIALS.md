@@ -2,17 +2,17 @@
 
 ## System Users
 
-### User 1: User1 Demo Connector
+### User 1: User1 Demo User
 - **Username:** `user-conn-user1-demo`
 - **Password:** `user1123`
 - **Connector ID:** `conn-user1-demo`
-- **Display Name:** User1 Demo Connector
+- **Display Name:** User1 Demo User
 
-### User 2: User2 Demo Connector  
+### User 2: User2 Demo User  
 - **Username:** `user-conn-user2-demo`
 - **Password:** `user2123`
 - **Connector ID:** `conn-user2-demo`
-- **Display Name:** User2 Demo Connector
+- **Display Name:** User2 Demo User
 
 ## Access URLs
 

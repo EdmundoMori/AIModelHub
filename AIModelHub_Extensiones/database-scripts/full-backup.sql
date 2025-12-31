@@ -652,8 +652,8 @@ INSERT INTO public.upload_sessions VALUES (6, 'ML_model_005', 'LGBM_Classifier_1
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: ml_assets_user
 --
 
-INSERT INTO public.users VALUES (3, 'user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-user1-demo', 'User1 Demo', 'demo@oeg.fi.upm.es', true, '2025-12-12 16:41:21.765511', '2025-12-12 16:41:21.765511');
-INSERT INTO public.users VALUES (4, 'user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-user2-demo', 'User2 Demo', 'edmundo@demo.com', true, '2025-12-12 16:41:21.765511', '2025-12-12 16:41:21.765511');
+INSERT INTO public.users VALUES (3, 'user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-user1-demo', 'User1 Demo User', 'demo@oeg.fi.upm.es', true, '2025-12-12 16:41:21.765511', '2025-12-12 16:41:21.765511');
+INSERT INTO public.users VALUES (4, 'user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-user2-demo', 'User2 Demo User', 'edmundo@demo.com', true, '2025-12-12 16:41:21.765511', '2025-12-12 16:41:21.765511');
 
 
 --

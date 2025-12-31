@@ -33,8 +33,8 @@ CREATE INDEX IF NOT EXISTS idx_upload_sessions_owner ON upload_sessions(owner);
 -- Using bcrypt hash with 10 rounds
 INSERT INTO users (username, password_hash, connector_id, display_name, is_active)
 VALUES 
-    ('user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-user1-demo', 'User1 Demo Connector', true),
-    ('user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-user2-demo', 'User2 Demo Connector', true)
+    ('user-conn-user1-demo', '$2a$10$I/m17k0PieyAy2M71CT9De3uVqv0mNft/yz.DmvGYrEZKAYc5qA1C', 'conn-user1-demo', 'User1 Demo User', true),
+    ('user-conn-user2-demo', '$2a$10$4V9w.aXdEAcxU/ln6M7MHue25m6yjTeeJM1E3bkvEPj2XaSOa8M5.', 'conn-user2-demo', 'User2 Demo User', true)
 ON CONFLICT (username) DO NOTHING;
 
 -- 6. Create view for assets with owner information
