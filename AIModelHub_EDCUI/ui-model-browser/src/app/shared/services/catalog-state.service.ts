@@ -5,6 +5,8 @@ interface CatalogDetailData {
   assetId: string;
   properties: any;
   originator: string;
+  participantId?: string;
+  endpointUrl?: string;
   contractOffers: any[];
   contractCount: number;
   catalogView?: boolean;

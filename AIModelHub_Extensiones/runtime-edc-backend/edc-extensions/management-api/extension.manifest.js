@@ -351,6 +351,49 @@ module.exports = new ExtensionManifest({
         });
       }
     });
+
+    // GET /v3/assets/provider/:providerId - Get assets with contracts from a specific provider
+    router.get('/v3/assets/provider/:providerId', optionalAuth, async (req, res) => {
+      try {
+        const { providerId } = req.params;
+        
+        // Query assets that have contracts created by the specified provider
+        const result = await pool.query(`
+          SELECT DISTINCT
+            a.id,
+            a.name,
+            a.description,
+            a.owner,
+            a.content_type,
+            a.version,
+            cd.id as contract_id,
+            cd.created_by as provider_id,
+            m.task,
+            m.subtask,
+            m.algorithm,
+            m.software
+          FROM assets a
+          INNER JOIN contract_definition_assets cda ON a.id = cda.asset_id
+          INNER JOIN contract_definitions cd ON cda.contract_definition_id = cd.id
+          LEFT JOIN ml_metadata m ON a.id = m.asset_id
+          WHERE cd.created_by = $1
+          ORDER BY a.name ASC
+        `, [providerId]);
+        
+        res.status(200).json(result.rows);
+        
+        console.log(`[Management API] Found ${result.rows.length} assets with contracts from provider: ${providerId}`);
+        
+      } catch (error) {
+        console.error('[Management API] Error fetching assets by provider:', error);
+        res.status(500).json({
+          errors: [{
+            message: error.message,
+            type: 'QueryError'
+          }]
+        });
+      }
+    });
     
     // ==================== S3 UPLOAD ENDPOINTS ====================
     
@@ -764,6 +807,8 @@ module.exports = new ExtensionManifest({
             '@type': 'dcat:Dataset',
             assetId: row.id,
             originator: row.owner,
+            participantId: row.owner, // For local assets, participantId is the same as owner
+            endpointUrl: `http://localhost:3000`, // Local connector endpoint
             properties: properties,
             contractOffers: contractOffers,
             contractCount: parseInt(row.contract_count)

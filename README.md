@@ -1,112 +1,205 @@
-# AIModelHub
+# 🚀 AIModelHub
 
-AI model management platform with an EDC-style runtime in Node.js and an Angular frontend to explore, register, and operate IA assets with S3 storage and rich metadata.
+**AI Model Management Platform for Data Spaces**
 
-## Project status
+EDC-compatible platform with Node.js runtime and Angular frontend for exploring, registering, and executing AI models with S3 storage, rich metadata, and real-time execution capabilities.
 
-First functional delivery of the AI model lifecycle for data spaces: it already supports registering and discovering models, creating EDC-style policies and contracts, and enabling negotiations between providers and consumers for service-based usage or direct download from S3 storage. The next phase will add model execution and evaluation within the data space to complete comparison and scoring.
+---
 
-## Contents
+## 🎯 Project Status
 
-- Overview and features
-- Repository structure
-- Requirements and dependencies
-- Installation and build
-- Usage with examples
-- Contribution
-- Acknowledgments and funding
-- Authors and license
+**Version 2.0** - Fully functional AI model lifecycle platform for data spaces:
+- ✅ Asset registration and discovery
+- ✅ EDC-style policies and contracts
+- ✅ Provider-consumer negotiations
+- ✅ **Model execution through HTTP endpoints (NEW)**
+- ✅ Real-time execution monitoring
+- ✅ Mock server with sample models
 
-## Main features
+---
 
-- EDC-compatible backend in Node.js with modular extensions (asset management, ML metadata, S3, authentication).
-- Angular 17 frontend for browsing, creating, and detailing assets.
-- PostgreSQL + MinIO S3 for metadata and artifacts.
-- Ready-to-use scripts for local deployment and sample data restore.
+## 📚 Documentation
 
-## Repository structure
+### 📖 **[Complete Guide](GUIDE.md)** ← Start Here!
+
+The complete guide includes:
+- Features and architecture
+- Quick start (one command deployment)
+- Model execution tutorial
+- Testing guide
+- Troubleshooting
+- Development workflow
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd AIModelHub
+
+# Deploy everything (3-5 minutes)
+./deploy.sh
+
+# Access application
+# Frontend: http://localhost:4200
+# Login: user-conn-user1-demo / user1123
+```
+
+---
+
+## 🎯 Key Features
+
+### Core Platform
+- ✅ EDC-compatible backend with modular extensions
+- ✅ Asset management and ML metadata
+- ✅ PostgreSQL + MinIO S3 storage
+- ✅ Angular 18 frontend
+- ✅ Authentication and access control
+- ✅ Contract definitions and catalog federation
+
+### Model Execution (NEW) 🚀
+- ✅ Execute models via HTTP REST API
+- ✅ Visual execution dashboard
+- ✅ JSON input editor with validation
+- ✅ Result visualization and history
+- ✅ Mock server with 3 sample models
+- ✅ Real-time execution monitoring
+
+---
+
+## 📁 Project Structure
 
 ```
 AIModelHub/
-├── deploy.sh                       # Automated deployment
-├── AIModelHub_Extensiones/         # Logic and services (symlinks keep previous paths)
-│   ├── runtime-edc-backend/        # EDC backend + API (symlink: backend)
-│   ├── database-scripts/           # SQL init/backup (symlink: database)
-│   ├── model-serving/              # Model HTTP server (symlink: model-server)
-│   └── infra-docker/               # Docker Compose (symlink: docker-compose.yml)
-├── AIModelHub_EDCUI/               # Interfaces
-│   └── ui-model-browser/           # Angular UI (symlink: ml-browser-app)
-├── DEPLOYMENT.md
-└── README.md
+├── deploy.sh                       # One-command deployment
+├── GUIDE.md                        # Complete documentation
+├── README.md                       # This file
+│
+├── AIModelHub_Extensiones/         # Backend logic
+│   ├── backend/                    # Node.js + Express
+│   │   ├── edc-extensions/        # Modular extensions
+│   │   │   └── model-execution/   # NEW: Model execution
+│   │   └── src/                   # Source code
+│   ├── database/                   # PostgreSQL schemas
+│   ├── model-server/               # Python mock server
+│   └── docker-compose.yml         # Infrastructure
+│
+└── AIModelHub_EDCUI/              # Frontend
+    └── ml-browser-app/            # Angular 18 UI
+        └── src/app/pages/
+            ├── ml-assets-browser/
+            ├── model-execution/   # NEW: Execution UI
+            ├── catalog/
+            └── contracts/
 ```
 
-## Requirements and dependencies
+---
 
-- Docker and Docker Compose (PostgreSQL + MinIO).
-- Node.js 18+ and npm 10+.
-- Python 3 (optional, for `model-serving`).
+## 🔧 Requirements
 
-## Installation and build
+| Component | Version | Check |
+|-----------|---------|-------|
+| Docker | 20.10+ | `docker --version` |
+| Node.js | 18+ | `node --version` |
+| npm | 9+ | `npm --version` |
+| Python | 3.8+ | `python3 --version` |
 
-```bash
-# 1) Enter the project
-cd AIModelHub
+**Resources:** 2 CPU cores, 4 GB RAM, 10 GB disk
 
-# 2) Automated deployment (requires Docker permissions)
-./deploy.sh
+---
 
-# 3) Manual (equivalent result to ./deploy.sh)
-# Infrastructure (PostgreSQL + MinIO)
-cd AIModelHub_Extensiones
-docker compose up -d
+## 🌐 Services
 
-# Backend
-cd runtime-edc-backend
-npm install
-nohup node src/server-edc.js > ../../backend.log 2>&1 &
+After deployment:
 
-# Frontend
-cd ../../AIModelHub_EDCUI/ui-model-browser
-npm install
-nohup npm run start > ../../frontend.log 2>&1 &
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Frontend** | http://localhost:4200 | user-conn-user1-demo / user1123 |
+| **Backend API** | http://localhost:3000 | - |
+| **Mock Server** | http://localhost:8080 | - |
+| **MinIO Console** | http://localhost:9001 | minioadmin / minioadmin123 |
+| **PostgreSQL** | localhost:5432 | ml_assets_user / ml_assets_password |
 
-# Verification
-curl http://localhost:3000/health
-```
+---
 
-## Usage with examples
+## 🧪 Testing Model Execution
 
-- Backend health: `curl http://localhost:3000/health`
-- List assets: `curl -X POST http://localhost:3000/v3/assets/request -H "Authorization: Bearer <token>"`
-- Frontend: open `http://localhost:4200`
-  - User 1: `user-conn-user1-demo / user1123`
-  - User 2: `user-conn-user2-demo / user2123`
-- MinIO Console: `http://localhost:9001` (`minioadmin/minioadmin123`).
+1. Open http://localhost:4200 and login
+2. Click "IA Execution" in navigation menu
+3. Select "Iris Classifier Demo API"
+4. Click "Execute Model"
+5. View results and execution history
+6. Monitor on http://localhost:8080
 
-## Contribution
+**See [GUIDE.md](GUIDE.md) for detailed testing scenarios**
 
-1. Open an issue with a clear description.
-2. Fork and create a branch (`feature/...` or `fix/...`).
-3. Submit a pull request with summary, test steps, and impact checklist.
+---
 
-## Acknowledgments and funding
+## 📖 Documentation Structure
 
-- Inspired by Eclipse Dataspace Components (EDC): extensions of this architecture to apply it to any data space.
-- Base technologies: Angular for UI, Express/Node.js for services, PostgreSQL for metadata, MinIO for S3 artifacts.
+- **[GUIDE.md](GUIDE.md)** - Complete guide with all details
+  - Architecture
+  - Deployment
+  - Model Execution
+  - Testing
+  - Troubleshooting
+  - Development
 
-## Funding
+---
 
-This work has received funding from the PIONERA project (Enhancing interoperability in data spaces through artificial intelligence), a project funded in the context of the call for Technological Products and Services for Data Spaces of the Ministry for Digital Transformation and Public Administration within the framework of the PRTR funded by the European Union (NextGenerationEU)
+## 🤝 Contributing
 
-<div align="center">
-  <img src="Logos financiación.png" alt="Logos financiación" width="900" />
-</div>
+1. Read [GUIDE.md](GUIDE.md) - Contributing section
+2. Create feature branch
+3. Make changes
+4. Test thoroughly
+5. Submit pull request
 
-## Authors and contact
+---
 
-- Maintainers: Edmundo Mori, Jiayun Liu.
-- Contact: edmundo.mori.orrillo@upm.es, jiayun.liu@alumnos.upm.es.
+## 🐛 Troubleshooting
 
-## License
+Common issues and solutions in [GUIDE.md](GUIDE.md) - Troubleshooting section:
+- Port conflicts
+- Database connection errors
+- Frontend compilation issues
+- Model execution failures
+
+---
+
+---
+
+## 📝 License
 
 Code licensed under Apache 2.0. See `LICENSE` in the original repository.
+
+---
+
+## 🙏 Acknowledgments
+
+- Inspired by Eclipse Dataspace Components (EDC)
+- Base technologies: Angular, Express/Node.js, PostgreSQL, MinIO
+
+### Funding
+
+This work has received funding from the **PIONERA project** (Enhancing interoperability in data spaces through artificial intelligence), a project funded in the context of the call for Technological Products and Services for Data Spaces of the Ministry for Digital Transformation and Public Administration within the framework of the PRTR funded by the European Union (NextGenerationEU).
+
+<div align="center">
+  <img src="Logos financiación.png" alt="Logos financiación" width="900" />
+</div>
+
+---
+
+## 👥 Authors and Contact
+
+- **Maintainers:** Edmundo Mori, Jiayun Liu
+- **Contact:** 
+  - edmundo.mori.orrillo@upm.es
+  - jiayun.liu@alumnos.upm.es
+
+---
+
+**Last Updated:** January 22, 2026  
+**Version:** 2.0.0

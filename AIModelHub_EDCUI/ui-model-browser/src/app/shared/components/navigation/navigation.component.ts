@@ -64,6 +64,16 @@ export class NavigationComponent {
       icon: 'add_circle'
     },
     {
+      path: '/models/execute',
+      label: 'IA Execution',
+      icon: 'play_circle'
+    },
+    {
+      path: '/negotiations',
+      label: 'EDC Negotiation',
+      icon: 'handshake'
+    },
+    {
       path: '/catalog',
       label: 'Catalog',
       icon: 'storage'

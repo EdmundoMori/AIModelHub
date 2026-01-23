@@ -161,10 +161,18 @@
             <button (click)="viewPolicyJson(offer)" color="accent" mat-stroked-button>
               <mat-icon>code</mat-icon> View JSON-LD
             </button>
-            <button (click)="negotiateContract(offer)" color="accent" mat-raised-button>
-              <mat-icon>handshake</mat-icon> Negotiate Contract
+            <button 
+              (click)="negotiateContract(offer)" 
+              color="accent" 
+              mat-raised-button
+              [disabled]="isBusy(offer) || isNegotiated(offer)">
+              <mat-icon>handshake</mat-icon> 
+              {{ isBusy(offer) ? 'Negotiating...' : isNegotiated(offer) ? 'Negotiated' : 'Negotiate Contract' }}
             </button>
           </mat-card-actions>
+          <mat-card-footer *ngIf="isBusy(offer)">
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          </mat-card-footer>
         </mat-card>
 
         <mat-card class="empty-state" *ngIf="!data.contractOffers || data.contractOffers.length === 0">

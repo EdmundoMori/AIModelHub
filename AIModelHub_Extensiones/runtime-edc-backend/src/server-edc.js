@@ -40,19 +40,21 @@ const corsOptions = {
     }
     
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
       callback(null, true);
     } else {
       // Log the blocked origin for debugging
-      console.log(`[CORS] Blocked origin: ${origin}`);
+      console.log(`[CORS] ⚠️ Non-standard origin (allowing): ${origin}`);
       callback(null, true); // Still allow but log it
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   maxAge: 86400, // 24 hours
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 };
 
 app.use(cors(corsOptions));
@@ -79,11 +81,29 @@ app.get('/health', (req, res) => {
 });
 
 /**
+ * Clear Node.js require cache for extensions
+ */
+function clearExtensionCache() {
+  const extensionPath = require('path').resolve(__dirname, '../edc-extensions');
+  console.log('[Bootstrap] Clearing module cache for:', extensionPath);
+  
+  Object.keys(require.cache).forEach(key => {
+    if (key.includes('edc-extensions')) {
+      console.log('[Bootstrap] Removing from cache:', key);
+      delete require.cache[key];
+    }
+  });
+}
+
+/**
  * Bootstrap the EDC Runtime
  */
 async function bootstrap() {
   try {
     console.log('[Bootstrap] Starting IA EDC Connector...');
+    
+    // Clear any cached extension modules
+    clearExtensionCache();
     
     // Create PostgreSQL Connection Pool
     const pool = new Pool({
@@ -117,6 +137,20 @@ async function bootstrap() {
       console.log('[Bootstrap] Management API routes mounted');
     }
     
+    // Get Model Execution API router from extensions
+    if (runtime.context.hasService('ModelExecutionRouter')) {
+      const executionRouter = runtime.context.getService('ModelExecutionRouter');
+      app.use('/', executionRouter);
+      console.log('[Bootstrap] Model Execution API routes mounted');
+    }
+    
+    // Get Contract Negotiation API router from extensions
+    if (runtime.context.hasService('ContractNegotiationRouter')) {
+      const negotiationRouter = runtime.context.getService('ContractNegotiationRouter');
+      app.use('/', negotiationRouter);
+      console.log('[Bootstrap] Contract Negotiation API routes mounted');
+    }
+    
     // Start HTTP server
     app.listen(PORT, () => {
       console.log('='.repeat(60));
@@ -128,6 +162,9 @@ async function bootstrap() {
       console.log(`[Server] Listening on http://localhost:${PORT}`);
       console.log(`[Server] Health check: http://localhost:${PORT}/health`);
       console.log(`[Server] Management API: http://localhost:${PORT}/v3/*`);
+      console.log(`[Server] Model Execution API: http://localhost:${PORT}/v3/models/*`);
+      console.log(`[Server] Contract Negotiation API: http://localhost:${PORT}/v3/contractnegotiations`);
+      console.log(`[Server] Contract Agreements API: http://localhost:${PORT}/v3/contractagreements`);
     });
     
   } catch (error) {

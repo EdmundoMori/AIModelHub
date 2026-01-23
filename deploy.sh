@@ -21,10 +21,11 @@ NC='\033[0m' # No Color
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXT_DIR="$PROJECT_DIR/AIModelHub_Extensiones"
 UI_DIR="$PROJECT_DIR/AIModelHub_EDCUI/ml-browser-app"
-BACKEND_DIR="$EXT_DIR/backend"
+BACKEND_DIR="$EXT_DIR/runtime-edc-backend"
 FRONTEND_DIR="$UI_DIR"
-DB_BACKUP="$EXT_DIR/database/full-backup.sql"
-DB_INIT="$EXT_DIR/database/init-database.sql"
+MODEL_SERVER_DIR="$EXT_DIR/model-server"
+DB_SCRIPTS_DIR="$EXT_DIR/database-scripts"
+DB_INIT_COMPLETE="$DB_SCRIPTS_DIR/000_init_database_complete.sql"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}🚀 AIModelHub - Automated Deployment${NC}"
@@ -34,7 +35,7 @@ echo ""
 ###############################################################################
 # Step 1: Check Prerequisites
 ###############################################################################
-echo -e "${YELLOW}[1/7]${NC} Checking prerequisites..."
+echo -e "${YELLOW}[1/8]${NC} Checking prerequisites..."
 
 if ! command -v docker &> /dev/null; then
     echo -e "${RED}❌ Docker not found. Please install Docker first.${NC}"
@@ -51,23 +52,31 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}❌ Python3 not found. Please install Python 3 first.${NC}"
+    exit 1
+fi
+
 DOCKER_VERSION=$(docker --version | cut -d' ' -f3 | cut -d',' -f1)
 NODE_VERSION=$(node --version)
 NPM_VERSION=$(npm --version)
+PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
 
 echo -e "${GREEN}✓${NC} Docker: $DOCKER_VERSION"
 echo -e "${GREEN}✓${NC} Node.js: $NODE_VERSION"
 echo -e "${GREEN}✓${NC} npm: $NPM_VERSION"
+echo -e "${GREEN}✓${NC} Python: $PYTHON_VERSION"
 echo ""
 
 ###############################################################################
 # Step 2: Stop Existing Services
 ###############################################################################
-echo -e "${YELLOW}[2/7]${NC} Stopping existing services..."
+echo -e "${YELLOW}[2/8]${NC} Stopping existing services..."
 
 # Stop any running Node processes
 pkill -f "node.*server-edc.js" || true
 pkill -f "ng serve" || true
+pkill -f "mock_server.py" || true
 
 # Stop Docker containers if running
 docker stop ml-assets-postgres ml-assets-minio 2>/dev/null || true
@@ -79,7 +88,7 @@ echo ""
 ###############################################################################
 # Step 3: Start Docker Infrastructure
 ###############################################################################
-echo -e "${YELLOW}[3/7]${NC} Starting Docker infrastructure (PostgreSQL + MinIO)..."
+echo -e "${YELLOW}[3/8]${NC} Starting Docker infrastructure (PostgreSQL + MinIO)..."
 
 # Start PostgreSQL
 docker run -d \
@@ -131,31 +140,65 @@ echo ""
 ###############################################################################
 # Step 4: Initialize Database
 ###############################################################################
-echo -e "${YELLOW}[4/7]${NC} Initializing database..."
+echo -e "${YELLOW}[4/8]${NC} Initializing database..."
 
-if [ -f "$DB_BACKUP" ]; then
-    echo "Restoring database from full backup..."
-    docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db < "$DB_BACKUP"
-    echo -e "${GREEN}✓${NC} Database restored with all data (2 users, 13 assets, 10 ML metadata)"
+# Check if database is already populated
+EXISTING_TABLES=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('assets', 'users', 'ml_metadata');" 2>/dev/null | xargs)
+
+if [ "$EXISTING_TABLES" = "3" ]; then
+    # Database already has tables, check if populated
+    ASSET_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM assets;" 2>/dev/null | xargs)
+    USER_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM users;" 2>/dev/null | xargs)
+    
+    if [ "$ASSET_COUNT" -gt "0" ]; then
+        echo "Database already initialized and populated"
+        echo "  • Existing users: $USER_COUNT"
+        echo "  • Existing assets: $ASSET_COUNT"
+    else
+        echo "Database schema exists but empty, initializing data..."
+        if [ -f "$DB_INIT_COMPLETE" ]; then
+            docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db < "$DB_INIT_COMPLETE" 2>&1 | grep -E "(INSERT|CREATE|ALTER)" | tail -5
+            echo -e "${GREEN}✓${NC} Database initialized with complete dataset"
+        else
+            echo -e "${RED}❌ Init script not found: $DB_INIT_COMPLETE${NC}"
+            exit 1
+        fi
+    fi
 else
-    echo "Creating empty database schema..."
-    docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db < "$DB_INIT"
-    echo -e "${GREEN}✓${NC} Database schema created with default users"
+    # Fresh database, use complete init script
+    echo "Initializing fresh database with complete dataset..."
+    if [ -f "$DB_INIT_COMPLETE" ]; then
+        echo "  Using: 000_init_database_complete.sql"
+        docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db < "$DB_INIT_COMPLETE" 2>&1 | grep -E "(CREATE TABLE|INSERT)" | wc -l | xargs echo "  • SQL statements executed:"
+        echo -e "${GREEN}✓${NC} Database initialized successfully"
+        
+        # Verify initialization
+        USER_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM users;" 2>/dev/null | xargs)
+        ASSET_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM assets;" 2>/dev/null | xargs)
+        CONTRACT_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM contract_definitions;" 2>/dev/null | xargs)
+        HTTP_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM data_addresses WHERE type = 'HttpData';" 2>/dev/null | xargs)
+        S3_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM data_addresses WHERE type = 'AmazonS3';" 2>/dev/null | xargs)
+        
+        echo ""
+        echo "  📊 Database Statistics:"
+        echo "    • Users: $USER_COUNT"
+        echo "    • Total Assets: $ASSET_COUNT"
+        echo "    • HTTP Models: $HTTP_COUNT"
+        echo "    • S3 Models: $S3_COUNT"
+        echo "    • Contracts: $CONTRACT_COUNT"
+    else
+        echo -e "${RED}❌ No database initialization script found${NC}"
+        echo -e "${RED}   Required file: 000_init_database_complete.sql${NC}"
+        exit 1
+    fi
 fi
 
-# Verify database
-USER_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM users;")
-ASSET_COUNT=$(docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db -t -c "SELECT COUNT(*) FROM assets;")
-
-echo "Database status:"
-echo "  • Users: $USER_COUNT"
-echo "  • Assets: $ASSET_COUNT"
 echo ""
 
 ###############################################################################
 # Step 5: Configure MinIO Bucket
 ###############################################################################
-echo -e "${YELLOW}[5/7]${NC} Configuring MinIO bucket..."
+echo -e "${YELLOW}[5/8]${NC} Configuring MinIO bucket..."
 
 # Create bucket using Docker exec
 docker exec ml-assets-minio mkdir -p /data/ml-assets 2>/dev/null || true
@@ -166,7 +209,7 @@ echo ""
 ###############################################################################
 # Step 6: Install Dependencies
 ###############################################################################
-echo -e "${YELLOW}[6/7]${NC} Installing dependencies..."
+echo -e "${YELLOW}[6/8]${NC} Installing dependencies..."
 
 # Backend dependencies
 echo "Installing backend dependencies..."
@@ -178,16 +221,26 @@ echo "Installing frontend dependencies..."
 cd "$FRONTEND_DIR"
 npm install --silent
 
+# Model Server dependencies (Python)
+echo "Installing model server dependencies..."
+cd "$MODEL_SERVER_DIR"
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
+source venv/bin/activate
+pip install -q -r requirements.txt
+deactivate
+
 echo -e "${GREEN}✓${NC} All dependencies installed"
 echo ""
 
 ###############################################################################
 # Step 7: Start Application Services
 ###############################################################################
-echo -e "${YELLOW}[7/7]${NC} Starting application services..."
+echo -e "${YELLOW}[7/8]${NC} Starting application services..."
 
 # Start backend in background
-echo "Starting backend (EDC + API)..."
+echo "Starting backend (Runtime EDC)..."
 cd "$BACKEND_DIR"
 nohup node src/server-edc.js > "$PROJECT_DIR/backend.log" 2>&1 &
 BACKEND_PID=$!
@@ -209,7 +262,44 @@ nohup npm run start > "$PROJECT_DIR/frontend.log" 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend started (PID: $FRONTEND_PID)"
 
+# Start model server in background
+echo "Starting model server (Mock AI Server)..."
+cd "$MODEL_SERVER_DIR"
+nohup python3 mock_server.py > "$PROJECT_DIR/model-server.log" 2>&1 &
+MODEL_SERVER_PID=$!
+echo "Model server started (PID: $MODEL_SERVER_PID)"
+
 echo -e "${GREEN}✓${NC} Application services started"
+echo ""
+
+###############################################################################
+# Step 8: Verify Services
+###############################################################################
+echo -e "${YELLOW}[8/8]${NC} Verifying services..."
+
+# Wait for backend health check
+echo -n "Checking backend health"
+for i in {1..10}; do
+    if curl -s http://localhost:3000/health &>/dev/null; then
+        echo -e " ${GREEN}✓${NC}"
+        break
+    fi
+    echo -n "."
+    sleep 1
+done
+
+# Wait for model server
+echo -n "Checking model server"
+for i in {1..10}; do
+    if curl -s http://localhost:8080 &>/dev/null; then
+        echo -e " ${GREEN}✓${NC}"
+        break
+    fi
+    echo -n "."
+    sleep 1
+done
+
+echo -e "${GREEN}✓${NC} All services verified"
 echo ""
 
 ###############################################################################
@@ -223,6 +313,7 @@ echo -e "${BLUE}📋 Service URLs:${NC}"
 echo ""
 echo -e "  🌐 Frontend (Angular):    ${GREEN}http://localhost:4200${NC}"
 echo -e "  🔌 Backend API (EDC):     ${GREEN}http://localhost:3000${NC}"
+echo -e "  🤖 Model Mock Server:     ${GREEN}http://localhost:8080${NC}"
 echo -e "  🗄️  PostgreSQL:            ${GREEN}localhost:5432${NC}"
 echo -e "  📦 MinIO Console:         ${GREEN}http://localhost:9001${NC}"
 echo -e "  📦 MinIO API:             ${GREEN}http://localhost:9000${NC}"
@@ -240,12 +331,20 @@ echo -e "  PostgreSQL:"
 echo -e "    User: ${GREEN}ml_assets_user${NC} / Password: ${GREEN}ml_assets_password${NC}"
 echo ""
 echo -e "${BLUE}📝 Logs:${NC}"
-echo -e "  Backend:  ${GREEN}tail -f backend.log${NC}"
-echo -e "  Frontend: ${GREEN}tail -f frontend.log${NC}"
+echo -e "  Backend:      ${GREEN}tail -f backend.log${NC}"
+echo -e "  Frontend:     ${GREEN}tail -f frontend.log${NC}"
+echo -e "  Model Server: ${GREEN}tail -f model-server.log${NC}"
 echo ""
 echo -e "${BLUE}🛑 Stop Services:${NC}"
-echo -e "  ${GREEN}kill $BACKEND_PID $FRONTEND_PID${NC}"
+echo -e "  ${GREEN}kill $BACKEND_PID $FRONTEND_PID $MODEL_SERVER_PID${NC}"
 echo -e "  ${GREEN}docker stop ml-assets-postgres ml-assets-minio${NC}"
+echo ""
+echo -e "${BLUE}🧪 Test Model Execution:${NC}"
+echo -e "  1. Open ${GREEN}http://localhost:4200${NC} and login"
+echo -e "  2. Click on '${GREEN}IA Execution${NC}' in the navigation menu"
+echo -e "  3. Select '${GREEN}Iris Classifier Demo API${NC}' from dropdown"
+echo -e "  4. Click '${GREEN}Execute Model${NC}' button"
+echo -e "  5. Watch results in real-time on ${GREEN}http://localhost:8080${NC}"
 echo ""
 echo -e "${YELLOW}⏳ Note: Frontend may take 30-60 seconds to compile...${NC}"
 echo ""

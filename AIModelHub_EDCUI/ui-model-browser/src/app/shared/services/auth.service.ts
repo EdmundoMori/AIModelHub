@@ -53,21 +53,40 @@ export class AuthService {
    */
   login(username: string, password: string): Observable<LoginResponse> {
     const url = `${this.AUTH_URL}/auth/login`;
-    console.log('[Auth] Attempting login to:', url);
-    console.log('[Auth] AUTH_URL:', this.AUTH_URL);
+    console.log('[Auth] =================================');
+    console.log('[Auth] Login attempt started');
+    console.log('[Auth] URL:', url);
+    console.log('[Auth] Username:', username);
+    console.log('[Auth] Password length:', password?.length);
+    console.log('[Auth] Request payload:', { username, password });
+    console.log('[Auth] =================================');
     
     return this.httpClient.post<LoginResponse>(url, { username, password }).pipe(
       tap(response => {
+        console.log('[Auth] Response received:', response);
+        console.log('[Auth] Response success:', response?.success);
+        console.log('[Auth] Response token exists:', !!response?.token);
+        
         if (response.success && response.token) {
           this.setToken(response.token);
           this.setUser(response.user);
           this.isAuthenticatedSubject.next(true);
           this.currentUserSubject.next(response.user);
-          console.log(`[Auth] User ${username} logged in successfully as ${response.user.connectorId}`);
+          console.log(`[Auth] ✅ User ${username} logged in successfully as ${response.user.connectorId}`);
+        } else {
+          console.error('[Auth] ❌ Response success is false or no token');
         }
       }),
       catchError(error => {
-        console.error('[Auth] Login failed:', error);
+        console.error('[Auth] =================================');
+        console.error('[Auth] ❌ Login failed with error');
+        console.error('[Auth] Error object:', error);
+        console.error('[Auth] Error status:', error?.status);
+        console.error('[Auth] Error statusText:', error?.statusText);
+        console.error('[Auth] Error message:', error?.message);
+        console.error('[Auth] Error error:', error?.error);
+        console.error('[Auth] Full error:', JSON.stringify(error, null, 2));
+        console.error('[Auth] =================================');
         return throwError(() => error);
       })
     );

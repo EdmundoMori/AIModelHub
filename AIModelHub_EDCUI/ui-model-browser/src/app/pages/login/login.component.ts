@@ -58,27 +58,61 @@ export class LoginComponent {
    * Handle form submission
    */
   onSubmit(): void {
+    console.log('[LoginComponent] =================================');
+    console.log('[LoginComponent] Form submission started');
+    console.log('[LoginComponent] Form valid:', this.loginForm.valid);
+    console.log('[LoginComponent] Form values:', this.loginForm.value);
+    
     if (this.loginForm.invalid) {
+      console.error('[LoginComponent] Form is invalid, aborting');
       return;
     }
 
     this.isLoading = true;
-    const { username, password } = this.loginForm.value;
+    const username = this.loginForm.value.username || '';
+    const password = this.loginForm.value.password || '';
+    
+    console.log('[LoginComponent] Extracted username:', username);
+    console.log('[LoginComponent] Extracted password length:', password?.length);
+    console.log('[LoginComponent] Calling authService.login()...');
 
     this.authService.login(username, password).subscribe({
       next: (response) => {
-        this.notificationService.showSuccess(
-          `Welcome ${response.user.displayName}! (${response.user.connectorId})`
-        );
-        this.router.navigate([this.returnUrl]);
+        console.log('[LoginComponent] ✅ Login successful!');
+        console.log('[LoginComponent] Response:', response);
+        this.isLoading = false;
+        
+        if (response && response.success && response.user) {
+          this.notificationService.showSuccess(
+            `Welcome ${response.user.displayName}! (${response.user.connectorId})`
+          );
+          console.log('[LoginComponent] Navigating to:', this.returnUrl);
+          this.router.navigate([this.returnUrl]);
+        } else {
+          console.error('[LoginComponent] Invalid response format');
+          this.notificationService.showError('Invalid response from server');
+        }
       },
       error: (error) => {
+        console.error('[LoginComponent] =================================');
+        console.error('[LoginComponent] ❌ Login error caught');
+        console.error('[LoginComponent] Error object:', error);
+        console.error('[LoginComponent] Error.error:', error?.error);
+        console.error('[LoginComponent] Error.error.message:', error?.error?.message);
+        console.error('[LoginComponent] Error status:', error?.status);
+        console.error('[LoginComponent] =================================');
+        
         this.isLoading = false;
-        const errorMessage = error.error?.message || 'Invalid username or password';
+        const errorMessage = error?.error?.message || error?.message || 'Invalid username or password';
+        console.error('[LoginComponent] Showing error message:', errorMessage);
         this.notificationService.showError(errorMessage);
-        console.error('[Login] Authentication failed:', error);
+      },
+      complete: () => {
+        console.log('[LoginComponent] Subscribe completed');
       }
     });
+    console.log('[LoginComponent] Subscribe initiated');
+    console.log('[LoginComponent] =================================');
   }
 
   /**

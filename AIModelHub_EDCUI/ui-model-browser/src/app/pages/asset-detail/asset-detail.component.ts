@@ -8,6 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AssetService } from '../../shared/services/asset.service';
+import { ModelExecutionService } from '../../shared/services/model-execution.service';
 import { NotificationService } from '../../shared/services/notification.service';
 
 /**
@@ -150,6 +151,12 @@ import { NotificationService } from '../../shared/services/notification.service'
               <mat-icon>arrow_back</mat-icon>
               Back to Assets
             </button>
+            @if (isExecutable) {
+              <button mat-raised-button color="accent" (click)="executeModel()">
+                <mat-icon>play_arrow</mat-icon>
+                Execute Model
+              </button>
+            }
             <button mat-raised-button color="primary" (click)="createOffer()">
               <mat-icon>add_circle</mat-icon>
               Create Offer
@@ -286,10 +293,12 @@ export class AssetDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private assetService = inject(AssetService);
+  private executionService = inject(ModelExecutionService);
   private notificationService = inject(NotificationService);
 
   asset: any = null;
   loading = true;
+  isExecutable = false;
 
   ngOnInit(): void {
     const assetId = this.route.snapshot.paramMap.get('id');
@@ -310,11 +319,27 @@ export class AssetDetailComponent implements OnInit {
         console.log('[Asset Detail] Asset loaded successfully:', asset);
         this.asset = asset;
         this.loading = false;
+        
+        // Check if asset is executable
+        this.checkIfExecutable(id);
       },
       error: (error) => {
         console.error('[Asset Detail] Error loading asset:', error);
         this.notificationService.showError('Error loading asset details');
         this.loading = false;
+      }
+    });
+  }
+
+  checkIfExecutable(assetId: string): void {
+    this.executionService.checkAssetExecutable(assetId).subscribe({
+      next: (info) => {
+        this.isExecutable = info.isExecutable;
+        console.log('[Asset Detail] Asset executable status:', this.isExecutable);
+      },
+      error: (error) => {
+        console.error('[Asset Detail] Error checking executable status:', error);
+        this.isExecutable = false;
       }
     });
   }
@@ -354,6 +379,14 @@ export class AssetDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/ml-assets']);
+  }
+
+  executeModel(): void {
+    if (this.asset) {
+      this.router.navigate(['/models/execute'], {
+        queryParams: { assetId: this.asset['@id'] }
+      });
+    }
   }
 
   createOffer(): void {

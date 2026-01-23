@@ -7,6 +7,8 @@ import { CatalogDetailComponent } from './pages/catalog/catalog-detail/catalog-d
 import { ContractsComponent } from './pages/contracts/contracts.component';
 import { ContractDefinitionNewComponent } from './pages/contract-definitions/contract-definition-new/contract-definition-new.component';
 import { LoginComponent } from './pages/login/login.component';
+import { ModelExecutionComponent } from './pages/model-execution/model-execution.component';
+import { ContractNegotiationComponent } from './pages/contract-negotiation/contract-negotiation.component';
 import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
@@ -52,6 +54,16 @@ export const routes: Routes = [
   {
     path: 'contract-definitions/create',
     component: ContractDefinitionNewComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'models/execute',
+    component: ModelExecutionComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'negotiations',
+    component: ContractNegotiationComponent,
     canActivate: [authGuard]
   },
   {

@@ -5,6 +5,7 @@ export * from './contract-definition.service';
 export * from './contract-negotiation.service';
 export * from './ml-assets.service';
 export * from './ml-browser.service';
+export * from './model-execution.service';
 export * from './notification.service';
 export * from './policy.service';
 export * from './vocabulary.service';

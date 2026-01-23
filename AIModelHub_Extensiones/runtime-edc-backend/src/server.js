@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -654,6 +655,47 @@ app.post('/v3/assets/request/count', async (req, res) => {
   }
 });
 
+// Get assets by provider (only those with contracts from specified provider)
+app.get('/v3/assets/provider/:providerId', optionalAuth, async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    
+    const result = await pool.query(`
+      SELECT DISTINCT
+        a.id,
+        a.name,
+        a.description,
+        a.owner,
+        a.content_type,
+        a.version,
+        cd.id as contract_id,
+        cd.created_by as provider_id,
+        m.task,
+        m.subtask,
+        m.algorithm,
+        m.software
+      FROM assets a
+      INNER JOIN contract_definition_assets cda ON a.id = cda.asset_id
+      INNER JOIN contract_definitions cd ON cda.contract_definition_id = cd.id
+      LEFT JOIN ml_metadata m ON a.id = m.asset_id
+      WHERE cd.created_by = $1
+      ORDER BY a.name
+    `, [providerId]);
+    
+    console.log(`[Assets Provider Filter] Found ${result.rows.length} assets for provider ${providerId}`);
+    res.status(200).json(result.rows);
+    
+  } catch (error) {
+    console.error('Error fetching assets by provider:', error);
+    res.status(500).json({
+      errors: [{
+        message: error.message,
+        type: 'QueryError'
+      }]
+    });
+  }
+});
+
 // Get single asset by ID - Optional authentication to mark local vs external
 app.get('/v3/assets/:id', optionalAuth, async (req, res) => {
   try {
@@ -1235,6 +1277,148 @@ app.post('/v3/catalog/request/count', optionalAuth, async (req, res) => {
     console.error('[Catalog] Error counting catalog items:', error);
     res.status(500).json({
       error: 'Failed to count catalog items',
+      message: error.message
+    });
+  }
+});
+
+// ==================== CONNECTOR SIMULATOR ENDPOINTS ====================
+
+/**
+ * GET /v3/simulator/connectors
+ * Get all simulated connectors (based on registered users)
+ */
+app.get('/v3/simulator/connectors', optionalAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.connector_id as id,
+        u.display_name as name,
+        CONCAT('http://localhost:3000/dsp/', u.connector_id) as endpoint,
+        'auto-accept' as behavior,
+        2000 as "responseTime",
+        true as "isActive",
+        u.created_at as "createdAt"
+      FROM users u
+      ORDER BY u.display_name
+    `);
+
+    const connectors = result.rows;
+    console.log(`[Connector Simulator] Returning ${connectors.length} connectors`);
+
+    res.status(200).json({
+      count: connectors.length,
+      connectors: connectors
+    });
+
+  } catch (error) {
+    console.error('[Connector Simulator] Error fetching connectors:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /v3/simulator/connectors/:id
+ * Get specific simulated connector
+ */
+app.get('/v3/simulator/connectors/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT 
+        u.connector_id as id,
+        u.display_name as name,
+        CONCAT('http://localhost:3000/dsp/', u.connector_id) as endpoint,
+        'auto-accept' as behavior,
+        2000 as "responseTime",
+        true as "isActive",
+        u.created_at as "createdAt"
+      FROM users u
+      WHERE u.connector_id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: `Connector ${id} not found`
+      });
+    }
+
+    res.status(200).json(result.rows[0]);
+
+  } catch (error) {
+    console.error('[Connector Simulator] Error fetching connector:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: error.message
+    });
+  }
+});
+
+// ==================== SIMULATOR ENDPOINTS ====================
+
+/**
+ * GET /v3/simulator/connectors
+ * Get all simulated connectors (based on users)
+ */
+app.get('/v3/simulator/connectors', optionalAuth, async (req, res) => {
+  try {
+    const currentUserConnectorId = req.user ? req.user.connectorId : null;
+    
+    const result = await pool.query(`
+      SELECT 
+        connector_id as id,
+        display_name as name,
+        'http://localhost:9000/dsp/' || connector_id as endpoint,
+        'auto-accept' as behavior,
+        2000 as "responseTime",
+        true as "isActive"
+      FROM users
+      ORDER BY id
+    `);
+    
+    const connectors = result.rows;
+    
+    res.status(200).json({
+      count: connectors.length,
+      connectors: connectors
+    });
+    
+  } catch (error) {
+    console.error('[Simulator] Error fetching connectors:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /v3/simulator/connectors/:id/toggle
+ * Toggle connector active state (mock endpoint for UI compatibility)
+ */
+app.post('/v3/simulator/connectors/:id/toggle', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Mock response - in real implementation would update state
+    res.status(200).json({
+      success: true,
+      message: `Connector ${id} toggled`,
+      connector: {
+        id: id,
+        isActive: true
+      }
+    });
+    
+  } catch (error) {
+    console.error('[Simulator] Error toggling connector:', error);
+    res.status(500).json({
+      error: 'Server Error',
       message: error.message
     });
   }

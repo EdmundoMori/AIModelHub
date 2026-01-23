@@ -196,6 +196,8 @@ export class MlAssetsBrowserComponent implements OnInit {
             assetId: catalogItem.assetId,
             properties: catalogItem.properties,
             originator: catalogItem.originator,
+            participantId: catalogItem.participantId,
+            endpointUrl: catalogItem.endpointUrl,
             contractOffers: catalogItem.contractOffers,
             contractCount: catalogItem.contractCount,
             catalogView: true,
