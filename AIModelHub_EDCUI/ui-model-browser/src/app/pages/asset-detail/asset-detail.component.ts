@@ -126,6 +126,39 @@ import { NotificationService } from '../../shared/services/notification.service'
               </div>
             </div>
 
+            <!-- Model Input Schema (for HTTP models) -->
+            @if (isHttpModel() && hasInputSchema()) {
+              <div class="detail-section">
+                <h3>Model Input Schema</h3>
+                <div class="schema-info">
+                  <p class="schema-description">This model accepts the following inputs:</p>
+                  <div class="schema-fields">
+                    @for (field of getInputFields(); track field.name) {
+                      <div class="field-card">
+                        <div class="field-header">
+                          <strong>{{ field.name }}</strong>
+                          @if (field.required) {
+                            <span class="required-badge">Required</span>
+                          }
+                        </div>
+                        <div class="field-details">
+                          <span class="field-type">Type: {{ field.type }}</span>
+                          @if (field.description) {
+                            <p class="field-description">{{ field.description }}</p>
+                          }
+                          @if (field.min !== undefined || field.max !== undefined) {
+                            <span class="field-range">
+                              Range: {{ field.min !== undefined ? field.min : '-∞' }} to {{ field.max !== undefined ? field.max : '+∞' }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
             <!-- Storage Information -->
             <div class="detail-section">
               <h3>Storage Information</h3>
@@ -151,7 +184,7 @@ import { NotificationService } from '../../shared/services/notification.service'
               <mat-icon>arrow_back</mat-icon>
               Back to Assets
             </button>
-            @if (isExecutable) {
+            @if (isHttpModel()) {
               <button mat-raised-button color="accent" (click)="executeModel()">
                 <mat-icon>play_arrow</mat-icon>
                 Execute Model
@@ -287,6 +320,75 @@ import { NotificationService } from '../../shared/services/notification.service'
       gap: 12px;
       padding: 16px;
     }
+
+    /* Input Schema Styles */
+    .schema-info {
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .schema-description {
+      margin: 0 0 12px 0;
+      color: #666;
+    }
+
+    .schema-fields {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-card {
+      background-color: white;
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 3px solid #3f51b5;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .field-header strong {
+      color: #3f51b5;
+      font-size: 14px;
+    }
+
+    .required-badge {
+      background-color: #f44336;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .field-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-type {
+      color: #666;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .field-description {
+      margin: 0;
+      color: #888;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .field-range {
+      color: #666;
+      font-size: 12px;
+    }
   `]
 })
 export class AssetDetailComponent implements OnInit {
@@ -299,6 +401,36 @@ export class AssetDetailComponent implements OnInit {
   asset: any = null;
   loading = true;
   isExecutable = false;
+
+  /**
+   * Check if this is an HTTP model
+   */
+  isHttpModel(): boolean {
+    const dataAddress = this.asset?.['edc:dataAddress'];
+    const isHttp = dataAddress?.['@type'] === 'HttpData' || dataAddress?.type === 'HttpData';
+    console.log('[Asset Detail] isHttpModel:', isHttp, 'dataAddress type:', dataAddress?.['@type']);
+    return isHttp;
+  }
+
+  /**
+   * Check if asset has input schema defined
+   */
+  hasInputSchema(): boolean {
+    const mlMetadata = this.asset?.['edc:properties']?.['ml:metadata'];
+    const inputFeatures = mlMetadata?.input_features || mlMetadata?.inputFeatures;
+    const hasSchema = !!(inputFeatures && (inputFeatures.fields || inputFeatures.features));
+    console.log('[Asset Detail] hasInputSchema:', hasSchema, 'inputFeatures:', inputFeatures);
+    return hasSchema;
+  }
+
+  /**
+   * Get input fields from schema
+   */
+  getInputFields(): any[] {
+    const mlMetadata = this.asset?.['edc:properties']?.['ml:metadata'];
+    const inputFeatures = mlMetadata?.input_features || mlMetadata?.inputFeatures;
+    return inputFeatures?.fields || inputFeatures?.features || [];
+  }
 
   ngOnInit(): void {
     const assetId = this.route.snapshot.paramMap.get('id');

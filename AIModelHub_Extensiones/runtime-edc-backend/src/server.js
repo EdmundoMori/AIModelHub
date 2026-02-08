@@ -606,7 +606,8 @@ app.post('/v3/assets/request', optionalAuth, async (req, res) => {
             'framework', m.framework,
             'software', m.software,
             'programmingLanguage', m.programming_language,
-            'license', m.license
+            'license', m.license,
+            'input_features', m.input_features
           )
         ) as "edc:properties",
         json_build_object(
@@ -724,7 +725,8 @@ app.get('/v3/assets/:id', optionalAuth, async (req, res) => {
             'framework', m.framework,
             'software', m.software,
             'programmingLanguage', m.programming_language,
-            'license', m.license
+            'license', m.license,
+            'input_features', m.input_features
           )
         ) as "edc:properties",
         json_build_object(

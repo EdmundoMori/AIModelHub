@@ -21,10 +21,19 @@ class MLMetadataService {
       return val;
     };
 
-    // Procesar input_features si existe
+    // Procesar input_features si existe (soporte para camelCase y snake_case)
     let inputFeaturesJson = null;
-    if (mlData.inputFeatures && Array.isArray(mlData.inputFeatures)) {
-      inputFeaturesJson = JSON.stringify(mlData.inputFeatures);
+    const inputFeaturesData = mlData.input_features || mlData.inputFeatures;
+    
+    if (inputFeaturesData) {
+      // Si ya es un objeto con estructura, guardarlo directamente
+      if (typeof inputFeaturesData === 'object' && !Array.isArray(inputFeaturesData)) {
+        inputFeaturesJson = JSON.stringify(inputFeaturesData);
+      }
+      // Si es un array de features, envolverlo en {features: [...]}
+      else if (Array.isArray(inputFeaturesData)) {
+        inputFeaturesJson = JSON.stringify({ features: inputFeaturesData });
+      }
     }
 
     await this.pool.query(

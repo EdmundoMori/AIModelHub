@@ -1,15 +1,17 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTabsModule, MatTabGroup } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { AssetService } from '../../shared/services/asset.service';
 import { NotificationService } from '../../shared/services/notification.service';
@@ -35,6 +37,19 @@ import {
 } from '../../shared/models/data-address';
 
 /**
+ * Input Field Configuration Interface
+ * Used to define expected inputs for HTTP model execution
+ */
+interface InputField {
+  name: string;
+  type: 'string' | 'int' | 'float' | 'number' | 'boolean';
+  required: boolean;
+  description?: string;
+  min?: number;
+  max?: number;
+}
+
+/**
  * Asset Create Component
  * 
  * Allows users to create new AI assets with:
@@ -55,7 +70,9 @@ import {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatCheckboxModule,
+    MatExpansionModule
   ],
   templateUrl: './asset-create.component.html',
   styleUrl: './asset-create.component.scss'
@@ -65,6 +82,9 @@ export class AssetCreateComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private vocabularyService = inject(VocabularyService);
+  
+  // ViewChild to control tab navigation
+  @ViewChild('tabGroup') tabGroup!: MatTabGroup;
   
   // Vocabulary options loaded from JS_Pionera_Ontology
   vocabularyOptions = signal<VocabularyOptions>({
@@ -76,6 +96,12 @@ export class AssetCreateComponent implements OnInit {
     software: [],
     format: []
   });
+  
+  // Track if HTTP Data fields are complete
+  httpDataFieldsCompleted = signal(false);
+  
+  // Track if Model Input Schema warning was shown
+  inputSchemaWarningShown = false;
   
   // Expose constants for template
   readonly DATA_ADDRESS_TYPES = DATA_ADDRESS_TYPES;
@@ -146,6 +172,42 @@ export class AssetCreateComponent implements OnInit {
     folder: ''
   };
 
+  // HTTP Model Input Configuration (for executable models)
+  httpInputFields: InputField[] = [];
+  
+  // Input Templates
+  inputTemplates = {
+    '': { name: '-- Start from scratch --', fields: [] },
+    'tabular': {
+      name: 'Tabular Data (multiple numbers)',
+      fields: [
+        { name: 'feature_1', type: 'float' as const, required: true, description: 'First numeric feature', min: 0, max: 10 },
+        { name: 'feature_2', type: 'float' as const, required: true, description: 'Second numeric feature', min: 0, max: 10 },
+        { name: 'feature_3', type: 'float' as const, required: true, description: 'Third numeric feature', min: 0, max: 10 },
+        { name: 'feature_4', type: 'float' as const, required: true, description: 'Fourth numeric feature', min: 0, max: 10 }
+      ]
+    },
+    'text': {
+      name: 'Text Input (single text field)',
+      fields: [
+        { name: 'text', type: 'string' as const, required: true, description: 'Input text to analyze' }
+      ]
+    },
+    'image': {
+      name: 'Image Input (base64)',
+      fields: [
+        { name: 'image', type: 'string' as const, required: true, description: 'Base64 encoded image' },
+        { name: 'image_format', type: 'string' as const, required: false, description: 'Image format (jpg, png)' }
+      ]
+    },
+    'custom': {
+      name: 'Custom Configuration',
+      fields: [
+        { name: 'input_param', type: 'string' as const, required: true, description: 'Custom input parameter' }
+      ]
+    }
+  };
+
   // Loading state
   isSubmitting = signal(false);
 
@@ -197,6 +259,26 @@ export class AssetCreateComponent implements OnInit {
     if (!this.validateDataAddress()) {
       this.notificationService.showError('Please fill all required storage fields');
       return;
+    }
+    
+    // Add input_features to mlMetadata if this is an HTTP model
+    if (this.storageTypeId === DATA_ADDRESS_TYPES.httpData && this.httpInputFields.length > 0) {
+      // Create input schema
+      const inputSchema = {
+        fields: this.httpInputFields.map(field => ({
+          name: field.name,
+          type: field.type,
+          required: field.required,
+          ...(field.description && { description: field.description }),
+          ...(field.min !== undefined && { min: field.min }),
+          ...(field.max !== undefined && { max: field.max })
+        }))
+      };
+      
+      // Add to mlMetadata as a JSON string (will be parsed as JSONB in backend)
+      (formData.mlMetadata as any).input_features = inputSchema;
+      
+      console.log('[Asset Create] Adding input_features to mlMetadata:', inputSchema);
     }
     
     this.isSubmitting.set(true);
@@ -384,6 +466,74 @@ export class AssetCreateComponent implements OnInit {
    */
   onToggleChange(property: keyof HttpDataAddress, value: boolean): void {
     (this.httpDataAddress[property] as any) = value ? 'true' : 'false';
+    // Check if all HTTP fields are now complete
+    this.checkHttpDataFieldsComplete();
+  }
+  
+  /**
+   * Check if all HTTP Data fields are complete
+   * Called on blur and toggle change events
+   */
+  checkHttpDataFieldsComplete(): void {
+    if (this.storageTypeId !== DATA_ADDRESS_TYPES.httpData) {
+      return;
+    }
+    
+    const isComplete = this.validateHttpDataFieldsComplete();
+    
+    // If just completed and not already shown warning
+    if (isComplete && !this.httpDataFieldsCompleted() && !this.inputSchemaWarningShown) {
+      this.httpDataFieldsCompleted.set(true);
+      this.inputSchemaWarningShown = true;
+      
+      // Show alert and redirect to ML Metadata tab
+      setTimeout(() => {
+        this.notificationService.showWarning(
+          'HTTP Configuration complete! Please configure the Model Input Schema in ML Metadata tab (REQUIRED for HTTP models)',
+          8000
+        );
+        
+        // Redirect to ML Metadata tab (index 1)
+        if (this.tabGroup) {
+          this.tabGroup.selectedIndex = 1;
+        }
+      }, 500);
+    }
+  }
+  
+  /**
+   * Validate that all required HTTP Data fields are filled
+   * Returns true only if name, baseUrl, path, contentType, authKey, authCode, secretName are filled
+   * AND at least one proxy option is selected
+   */
+  private validateHttpDataFieldsComplete(): boolean {
+    const http = this.httpDataAddress;
+    
+    // Check all required fields
+    const requiredFieldsFilled = !!(      http.name &&
+      http.baseUrl &&
+      http.path &&
+      http.contentType &&
+      http.authKey &&
+      http.authCode &&
+      http.secretName
+    );
+    
+    // Check at least one proxy option is enabled
+    const atLeastOneProxyEnabled = 
+      http.proxyBody === 'true' ||
+      http.proxyPath === 'true' ||
+      http.proxyQueryParams === 'true' ||
+      http.proxyMethod === 'true';
+    
+    return requiredFieldsFilled && atLeastOneProxyEnabled;
+  }
+  
+  /**
+   * Called when user leaves an HTTP Data input field
+   */
+  onHttpDataFieldBlur(): void {
+    this.checkHttpDataFieldsComplete();
   }
 
   /**
@@ -394,6 +544,74 @@ export class AssetCreateComponent implements OnInit {
     if (input.files && input.files.length > 0) {
       this.dataSpacePrototypeStoreAddress.file = input.files[0];
     }
+  }
+
+  /**
+   * Add a new input field to the configuration
+   */
+  addInputField(): void {
+    this.httpInputFields.push({
+      name: '',
+      type: 'string',
+      required: true,
+      description: ''
+    });
+  }
+
+  /**
+   * Remove an input field from the configuration
+   */
+  removeInputField(index: number): void {
+    this.httpInputFields.splice(index, 1);
+  }
+
+  /**
+   * Load input fields from a predefined template
+   */
+  loadTemplate(templateKey: string): void {
+    if (templateKey && this.inputTemplates[templateKey as keyof typeof this.inputTemplates]) {
+      const template = this.inputTemplates[templateKey as keyof typeof this.inputTemplates];
+      this.httpInputFields = JSON.parse(JSON.stringify(template.fields)); // Deep copy
+      this.notificationService.showInfo(`Template "${template.name}" loaded successfully`);
+    } else {
+      this.httpInputFields = [];
+    }
+  }
+
+  /**
+   * Get Input Schema as JSON string for preview
+   */
+  getInputSchemaJSON(): string {
+    if (this.httpInputFields.length === 0) {
+      return '{}';
+    }
+    
+    const schema = {
+      fields: this.httpInputFields.map(field => ({
+        name: field.name,
+        type: field.type,
+        required: field.required,
+        ...(field.description && { description: field.description }),
+        ...(field.min !== undefined && { min: field.min }),
+        ...(field.max !== undefined && { max: field.max })
+      }))
+    };
+    
+    return JSON.stringify(schema, null, 2);
+  }
+
+  /**
+   * Get template keys for dropdown
+   */
+  getTemplateKeys(): string[] {
+    return Object.keys(this.inputTemplates);
+  }
+
+  /**
+   * Get template name by key
+   */
+  getTemplateName(key: string): string {
+    return this.inputTemplates[key as keyof typeof this.inputTemplates]?.name || key;
   }
 
   /**

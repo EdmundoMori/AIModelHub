@@ -175,11 +175,13 @@ export class ModelExecutionComponent implements OnInit {
 
     const inputFeatures = this.selectedAsset.input_features;
     
-    // Check if we have a proper schema with features array
-    if (inputFeatures.features && Array.isArray(inputFeatures.features)) {
+    // Check if we have a proper schema with features or fields array (both supported)
+    const fieldsArray = inputFeatures.features || inputFeatures.fields;
+    
+    if (fieldsArray && Array.isArray(fieldsArray)) {
       // Build dynamic form fields
       this.inputMode = 'form';
-      this.inputFields = inputFeatures.features.map((feature: any) => {
+      this.inputFields = fieldsArray.map((feature: any) => {
         const fieldType = this.mapFieldType(feature.type);
         return {
           name: feature.name,
@@ -191,6 +193,8 @@ export class ModelExecutionComponent implements OnInit {
           max: feature.max
         };
       });
+      
+      console.log('[Model Execution] Initialized input fields from schema:', this.inputFields);
     } else if (inputFeatures.text !== undefined) {
       // For text-based models (like sentiment analysis)
       this.inputMode = 'form';

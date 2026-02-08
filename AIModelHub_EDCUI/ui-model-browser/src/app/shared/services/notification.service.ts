@@ -11,16 +11,17 @@ export class NotificationService {
   /**
    * Shows a snackbar message with a particular text
    * @param message The text to display
+   * @param duration Duration in milliseconds (default: 3000 or 5000 if onAction specified)
    * @param action A string specifying the text on an action button. If left out, no action button is shown.
    * If left out, and onAction is specified, "Done" is used as default.
    * @param onAction A callback that is invoked when the action button is clicked.
    */
-  public showWarning(message: string, action?: string, onAction?: () => unknown): Observable<MatSnackBarDismiss> {
+  public showWarning(message: string, duration?: number, action?: string, onAction?: () => unknown): Observable<MatSnackBarDismiss> {
     if (!action && onAction) {
       action = "Done";
     }
     const config: MatSnackBarConfig = {
-      duration: onAction ? 5000 : 3000, // no auto-cancel if an action was specified
+      duration: duration || (onAction ? 5000 : 3000), // no auto-cancel if an action was specified
       verticalPosition: "top",
       politeness: "polite",
       horizontalPosition: "end",

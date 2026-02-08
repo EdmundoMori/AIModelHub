@@ -107,6 +107,17 @@ export class CatalogDetailComponent implements OnInit, OnDestroy {
     this.router.navigate([returnUrl]);
   }
 
+  /**
+   * Navigate to model execution page with the current asset
+   */
+  navigateToExecution(): void {
+    if (this.data?.assetId) {
+      this.router.navigate(['/models/execute'], {
+        queryParams: { assetId: this.data.assetId }
+      });
+    }
+  }
+
   getPolicyAction(policy: any): string {
     if (!policy?.policy) return 'N/A';
     const permissions = policy.policy['odrl:permission'];
@@ -305,5 +316,117 @@ export class CatalogDetailComponent implements OnInit, OnDestroy {
   getEntries(obj: any): { key: string; value: any }[] {
     if (!obj || typeof obj !== 'object') return [];
     return Object.entries(obj).map(([key, value]) => ({ key, value }));
+  }
+
+  /**
+   * Check if asset has ML metadata
+   */
+  hasMLMetadata(): boolean {
+    return !!(this.data?.properties?.ml_metadata || this.data?.properties?.mlMetadata);
+  }
+
+  /**
+   * Get ML metadata value by key
+   */
+  getMLMetadataValue(key: string): any {
+    const mlMetadata = this.data?.properties?.ml_metadata || this.data?.properties?.mlMetadata;
+    if (!mlMetadata) return null;
+    
+    const value = mlMetadata[key];
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.join(', ');
+    }
+    
+    return value || null;
+  }
+
+  /**
+   * Check if this is an HTTP model
+   */
+  isHttpModel(): boolean {
+    console.log('[Catalog Detail] isHttpModel() called');
+    console.log('[Catalog Detail] Full data object:', JSON.stringify(this.data, null, 2));
+    console.log('[Catalog Detail] Properties object:', this.data?.properties);
+    
+    // Check multiple possible property paths for dataAddress
+    const dataAddress = this.data?.properties?.data_address || 
+                       this.data?.properties?.dataAddress ||
+                       this.data?.properties?.['edc:dataAddress'] ||
+                       (this.data as any)?.['edc:dataAddress'];
+    
+    console.log('[Catalog Detail] Data address found:', dataAddress);
+    console.log('[Catalog Detail] Data address type:', dataAddress?.type, dataAddress?.['@type']);
+    
+    if (dataAddress?.type === 'HttpData' || dataAddress?.['@type'] === 'HttpData') {
+      console.log('[Catalog Detail] ✅ Is HTTP model (type check passed)');
+      return true;
+    }
+    
+    // Fallback: check if baseUrl exists
+    const hasBaseUrl = !!(dataAddress?.baseUrl);
+    console.log('[Catalog Detail] Has baseUrl?', hasBaseUrl);
+    console.log('[Catalog Detail] Final result:', hasBaseUrl);
+    return hasBaseUrl;
+  }
+
+  /**
+   * Check if asset has input schema defined
+   */
+  hasInputSchema(): boolean {
+    console.log('[Catalog Detail] hasInputSchema() called');
+    console.log('[Catalog Detail] Checking ML metadata paths...');
+    
+    // Check multiple possible property paths for ML metadata
+    const mlMetadata = this.data?.properties?.ml_metadata || 
+                      this.data?.properties?.mlMetadata ||
+                      this.data?.properties?.['ml:metadata'];
+    
+    console.log('[Catalog Detail] ML metadata found:', mlMetadata);
+    
+    if (!mlMetadata) {
+      console.log('[Catalog Detail] ❌ No ML metadata found');
+      console.log('[Catalog Detail] Available property keys:', Object.keys(this.data?.properties || {}));
+      return false;
+    }
+    
+    const inputFeatures = mlMetadata.input_features || mlMetadata.inputFeatures;
+    console.log('[Catalog Detail] Input features:', inputFeatures);
+    
+    const hasSchema = !!(inputFeatures && (inputFeatures.fields || inputFeatures.features));
+    
+    console.log('[Catalog Detail] Input schema check:', { 
+      hasInputFeatures: !!inputFeatures, 
+      hasFields: !!(inputFeatures?.fields), 
+      hasFeatures: !!(inputFeatures?.features),
+      result: hasSchema
+    });
+    
+    if (hasSchema) {
+      console.log('[Catalog Detail] ✅ Has input schema');
+    } else {
+      console.log('[Catalog Detail] ❌ No input schema found');
+    }
+    
+    return hasSchema;
+  }
+
+  /**
+   * Get input fields from schema
+   */
+  getInputFields(): any[] {
+    // Check multiple possible property paths for ML metadata
+    const mlMetadata = this.data?.properties?.ml_metadata || 
+                      this.data?.properties?.mlMetadata ||
+                      this.data?.properties?.['ml:metadata'];
+    
+    if (!mlMetadata) return [];
+    
+    const inputFeatures = mlMetadata.input_features || mlMetadata.inputFeatures;
+    if (!inputFeatures) return [];
+    
+    // Support both 'fields' and 'features' array names
+    return inputFeatures.fields || inputFeatures.features || [];
   }
 }

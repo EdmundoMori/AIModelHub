@@ -8,7 +8,7 @@
     </mat-card-header>
 
     <mat-card-content>
-      <mat-tab-group animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start" class="main-tab-group">
+      <mat-tab-group #tabGroup animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start" class="main-tab-group">
         
         <!-- Tab 1: Asset Information -->
         <mat-tab label="Asset Information">
@@ -185,6 +185,143 @@
                 <mat-hint>Select the model file format</mat-hint>
               </mat-form-field>
             </div>
+            
+            <!-- Model Input Schema (Only for HTTP Models) -->
+            @if (storageTypeId === 'HttpData') {
+              <div class="input-config-section">
+                <div class="section-header">
+                  <mat-icon>input</mat-icon>
+                  <h3>Model Input Schema (REQUIRED for HTTP Models)</h3>
+                </div>
+                
+                <div class="alert-box warning-box">
+                  <mat-icon>warning</mat-icon>
+                  <p>
+                    <strong>This section is REQUIRED for HTTP models.</strong> 
+                    Define the inputs your model endpoint expects to enable the IA Execution interface.
+                  </p>
+                </div>
+                
+                <p class="helper-text">
+                  These fields will generate a dynamic form in the IA Execution interface and will be saved
+                  as part of the Daimo/JS_Pionera_Ontology metadata (ml_metadata.input_features).
+                </p>
+
+                <!-- Template Selector -->
+                <div class="form-row">
+                  <mat-form-field class="form-field-full" color="accent">
+                    <mat-label>Quick Start Template</mat-label>
+                    <mat-select (selectionChange)="loadTemplate($event.value)">
+                      @for (key of getTemplateKeys(); track key) {
+                        <mat-option [value]="key">{{ getTemplateName(key) }}</mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>Select a template to quickly configure common input patterns</mat-hint>
+                  </mat-form-field>
+                </div>
+
+                <!-- Add Field Button -->
+                <button (click)="addInputField()" type="button" class="btn-add-field" mat-stroked-button color="accent">
+                  <mat-icon>add</mat-icon>
+                  Add Input Field
+                </button>
+
+                <!-- Input Fields List -->
+                @if (httpInputFields.length > 0) {
+                  <div class="fields-list">
+                    @for (field of httpInputFields; track $index) {
+                      <mat-expansion-panel class="field-panel">
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon>{{ field.type === 'string' ? 'text_fields' : field.type === 'boolean' ? 'toggle_on' : 'pin' }}</mat-icon>
+                            <span class="field-title">{{ field.name || 'New Field ' + ($index + 1) }}</span>
+                            <span class="field-type-badge">{{ field.type }}</span>
+                          </mat-panel-title>
+                          <mat-panel-description>
+                            {{ field.description || 'No description' }}
+                          </mat-panel-description>
+                        </mat-expansion-panel-header>
+
+                        <div class="field-config-content">
+                          <div class="form-row">
+                            <mat-form-field class="form-field" color="accent">
+                              <mat-label>Field Name *</mat-label>
+                              <input [(ngModel)]="field.name" matInput required placeholder="feature_name">
+                              <mat-hint>Use snake_case (e.g., sepal_length)</mat-hint>
+                            </mat-form-field>
+
+                            <mat-form-field class="form-field" color="accent">
+                              <mat-label>Data Type *</mat-label>
+                              <mat-select [(ngModel)]="field.type" required>
+                                <mat-option value="string">Text (string)</mat-option>
+                                <mat-option value="int">Integer (int)</mat-option>
+                                <mat-option value="float">Decimal (float)</mat-option>
+                                <mat-option value="number">Number (auto)</mat-option>
+                                <mat-option value="boolean">True/False (boolean)</mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+
+                          <div class="form-row">
+                            <mat-form-field class="form-field-full" color="accent">
+                              <mat-label>Description</mat-label>
+                              <input [(ngModel)]="field.description" matInput placeholder="Brief description of this input">
+                              <mat-hint>This will be shown as a hint in the execution interface</mat-hint>
+                            </mat-form-field>
+                          </div>
+
+                          <div class="form-row field-options">
+                            <mat-checkbox [(ngModel)]="field.required" color="accent">
+                              <strong>Required field</strong>
+                            </mat-checkbox>
+
+                            <!-- Min/Max for numeric types -->
+                            @if (field.type === 'int' || field.type === 'float' || field.type === 'number') {
+                              <mat-form-field class="form-field-small" color="accent">
+                                <mat-label>Min Value</mat-label>
+                                <input [(ngModel)]="field.min" matInput type="number" step="0.1">
+                              </mat-form-field>
+
+                              <mat-form-field class="form-field-small" color="accent">
+                                <mat-label>Max Value</mat-label>
+                                <input [(ngModel)]="field.max" matInput type="number" step="0.1">
+                              </mat-form-field>
+                            }
+                          </div>
+
+                          <div class="field-actions">
+                            <button (click)="removeInputField($index)" type="button" mat-stroked-button color="warn">
+                              <mat-icon>delete</mat-icon>
+                              Remove Field
+                            </button>
+                          </div>
+                        </div>
+                      </mat-expansion-panel>
+                    }
+                  </div>
+
+                  <!-- JSON Preview -->
+                  <div class="json-preview">
+                    <h5>
+                      <mat-icon>code</mat-icon>
+                      Preview (JSON Schema - Daimo Ontology)
+                    </h5>
+                    <pre class="json-code">{{ getInputSchemaJSON() }}</pre>
+                    <p class="preview-hint">
+                      <mat-icon>info</mat-icon>
+                      This schema will be saved in ml_metadata.input_features (Daimo/JS_Pionera_Ontology) and used to generate the execution form
+                    </p>
+                  </div>
+                }
+
+                @if (httpInputFields.length === 0) {
+                  <div class="empty-fields-message">
+                    <mat-icon>info</mat-icon>
+                    <p>No input fields defined yet. Click "Add Input Field" or select a template to get started.</p>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </mat-tab>
 
@@ -207,51 +344,59 @@
               <div class="storage-config">
                 <h4>HTTP Data Configuration</h4>
                 
+                <div class="alert-box info-box">
+                  <mat-icon>info</mat-icon>
+                  <p>
+                    Fill all required fields below. Once complete, you will be redirected to the 
+                    <strong>ML Metadata</strong> tab to configure the Model Input Schema (REQUIRED).
+                  </p>
+                </div>
+                
                 <div class="form-row">
                   <mat-form-field class="form-field" color="accent">
                     <mat-label>Name *</mat-label>
-                    <input [(ngModel)]="httpDataAddress.name" matInput required>
+                    <input [(ngModel)]="httpDataAddress.name" matInput required (blur)="onHttpDataFieldBlur()">
                   </mat-form-field>
 
                   <mat-form-field class="form-field" color="accent">
                     <mat-label>Base URL *</mat-label>
-                    <input [(ngModel)]="httpDataAddress.baseUrl" matInput required placeholder="https://example.com">
+                    <input [(ngModel)]="httpDataAddress.baseUrl" matInput required placeholder="https://example.com" (blur)="onHttpDataFieldBlur()">
                   </mat-form-field>
                 </div>
 
                 <div class="form-row">
                   <mat-form-field class="form-field" color="accent">
-                    <mat-label>Path</mat-label>
-                    <input [(ngModel)]="httpDataAddress.path" matInput placeholder="/api/data">
+                    <mat-label>Path *</mat-label>
+                    <input [(ngModel)]="httpDataAddress.path" matInput required placeholder="/api/data" (blur)="onHttpDataFieldBlur()">
                   </mat-form-field>
 
                   <mat-form-field class="form-field" color="accent">
-                    <mat-label>Content Type</mat-label>
-                    <input [(ngModel)]="httpDataAddress.contentType" matInput placeholder="application/json">
-                  </mat-form-field>
-                </div>
-
-                <div class="form-row">
-                  <mat-form-field class="form-field" color="accent">
-                    <mat-label>Auth Key</mat-label>
-                    <input [(ngModel)]="httpDataAddress.authKey" matInput>
-                  </mat-form-field>
-
-                  <mat-form-field class="form-field" color="accent">
-                    <mat-label>Auth Code</mat-label>
-                    <input [(ngModel)]="httpDataAddress.authCode" matInput type="password">
+                    <mat-label>Content Type *</mat-label>
+                    <input [(ngModel)]="httpDataAddress.contentType" matInput required placeholder="application/json" (blur)="onHttpDataFieldBlur()">
                   </mat-form-field>
                 </div>
 
                 <div class="form-row">
                   <mat-form-field class="form-field" color="accent">
-                    <mat-label>Secret Name</mat-label>
-                    <input [(ngModel)]="httpDataAddress.secretName" matInput>
+                    <mat-label>Auth Key *</mat-label>
+                    <input [(ngModel)]="httpDataAddress.authKey" matInput required (blur)="onHttpDataFieldBlur()">
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field" color="accent">
+                    <mat-label>Auth Code *</mat-label>
+                    <input [(ngModel)]="httpDataAddress.authCode" matInput required type="password" (blur)="onHttpDataFieldBlur()">
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field class="form-field" color="accent">
+                    <mat-label>Secret Name *</mat-label>
+                    <input [(ngModel)]="httpDataAddress.secretName" matInput required (blur)="onHttpDataFieldBlur()">
                   </mat-form-field>
                 </div>
 
                 <div class="proxy-toggles">
-                  <h5>Proxy Settings</h5>
+                  <h5>Proxy Settings * (Select at least one)</h5>
                   <div class="toggles-row">
                     <mat-slide-toggle 
                       [checked]="httpDataAddress.proxyBody === 'true'" 

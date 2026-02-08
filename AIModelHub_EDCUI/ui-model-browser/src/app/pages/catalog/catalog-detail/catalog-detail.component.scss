@@ -10,9 +10,26 @@
   position: relative;
 }
 
-.go-back {
+.header-actions {
+  display: flex;
+  gap: 12px;
   margin-bottom: 20px;
+  align-items: center;
   
+  .go-back {
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+  
+  .execute-model-btn {
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+.go-back {
   mat-icon {
     margin-right: 8px;
   }
@@ -219,6 +236,106 @@
   }
 }
 
+// Input Schema Section
+.input-schema-section {
+  .input-field-panel {
+    margin-bottom: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+
+    &:last-of-type {
+      margin-bottom: 16px;
+    }
+
+    ::ng-deep .mat-expansion-panel-header {
+      padding: 16px;
+
+      .mat-panel-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+
+        .field-icon {
+          color: #667eea;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+
+        .field-name {
+          font-weight: 600;
+          color: #333;
+          font-family: 'Courier New', monospace;
+        }
+
+        .type-chip {
+          background: #e3f2fd;
+          color: #1976d2;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+
+        .required-chip {
+          background: #fce4ec;
+          color: #c2185b;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .field-details {
+      padding: 16px;
+      background: #fafafa;
+
+      .field-detail-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 8px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        strong {
+          min-width: 120px;
+          color: #555;
+          font-size: 0.9rem;
+        }
+
+        span {
+          color: #666;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  .schema-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #e3f2fd;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+
+    mat-icon {
+      color: #1976d2;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    p {
+      margin: 0;
+      color: #1565c0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .properties-grid {
     grid-template-columns: 1fr;
@@ -234,5 +351,89 @@
 
   .contract-offers-container {
     padding: 12px;
+  }
+
+  .input-schema-section {
+    .field-details .field-detail-row {
+      flex-direction: column;
+      gap: 4px;
+
+      strong {
+        min-width: auto;
+      }
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .main-tab-group {
+    background: #1e1e1e;
+  }
+
+  .dialog-card {
+    background: #2d2d2d;
+
+    mat-card-header mat-card-title {
+      color: rgba(255, 255, 255, 0.87);
+    }
+  }
+
+  .properties-grid .property {
+    background: #3a3a3a;
+
+    .property-title {
+      color: rgba(255, 255, 255, 0.87);
+    }
+
+    .property-value {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .input-schema-section {
+    .input-field-panel {
+      border-color: rgba(255, 255, 255, 0.12);
+
+      ::ng-deep .mat-expansion-panel-header .mat-panel-title {
+        .field-name {
+          color: rgba(255, 255, 255, 0.87);
+        }
+
+        .type-chip {
+          background: rgba(33, 150, 243, 0.2);
+          color: #64b5f6;
+        }
+
+        .required-chip {
+          background: rgba(233, 30, 99, 0.2);
+          color: #f48fb1;
+        }
+      }
+
+      .field-details {
+        background: rgba(255, 255, 255, 0.03);
+
+        .field-detail-row strong {
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .field-detail-row span {
+          color: rgba(255, 255, 255, 0.6);
+        }
+      }
+    }
+
+    .schema-info-box {
+      background: rgba(33, 150, 243, 0.1);
+
+      mat-icon {
+        color: #64b5f6;
+      }
+
+      p {
+        color: #90caf9;
+      }
+    }
   }
 }

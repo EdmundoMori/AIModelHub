@@ -250,6 +250,66 @@ def speech_recognizer(data):
         'processing_time_ms': round(random.uniform(1500, 3000), 2)
     }
 
+def bmi_calculator(data):
+    """Calcula el Índice de Masa Corporal (BMI/IMC) y proporciona clasificación"""
+    time.sleep(random.uniform(0.2, 0.6))  # Procesamiento rápido
+    
+    # Datos de entrada esperados
+    weight_kg = data.get('weight_kg', 70.0)
+    height_m = data.get('height_m', 1.75)
+    
+    # Validar inputs
+    if weight_kg <= 0 or height_m <= 0:
+        raise ValueError("Weight and height must be positive numbers")
+    
+    # Calcular BMI
+    bmi = weight_kg / (height_m ** 2)
+    
+    # Clasificación según OMS
+    if bmi < 18.5:
+        category = 'Underweight'
+        risk_level = 'moderate'
+        recommendation = 'Consider consulting a nutritionist to gain weight healthily'
+    elif bmi < 25:
+        category = 'Normal weight'
+        risk_level = 'low'
+        recommendation = 'Maintain your current healthy lifestyle'
+    elif bmi < 30:
+        category = 'Overweight'
+        risk_level = 'moderate'
+        recommendation = 'Consider a balanced diet and regular exercise'
+    elif bmi < 35:
+        category = 'Obesity Class I'
+        risk_level = 'high'
+        recommendation = 'Consult a healthcare professional for weight management'
+    elif bmi < 40:
+        category = 'Obesity Class II'
+        risk_level = 'very_high'
+        recommendation = 'Medical supervision recommended for weight loss'
+    else:
+        category = 'Obesity Class III'
+        risk_level = 'extreme'
+        recommendation = 'Urgent medical attention recommended'
+    
+    return {
+        'model': 'BMI Calculator',
+        'bmi': round(bmi, 2),
+        'category': category,
+        'risk_level': risk_level,
+        'recommendation': recommendation,
+        'input_data': {
+            'weight_kg': weight_kg,
+            'height_m': height_m
+        },
+        'health_ranges': {
+            'underweight': '< 18.5',
+            'normal': '18.5 - 24.9',
+            'overweight': '25 - 29.9',
+            'obese': '>= 30'
+        },
+        'calculation': f'{weight_kg} / ({height_m}²) = {round(bmi, 2)}'
+    }
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
@@ -455,7 +515,7 @@ def home():
                 </div>
                 <div class="stat-card">
                     <div class="label">Available Models</div>
-                    <div class="number">3</div>
+                    <div class="number">4</div>
                 </div>
                 <div class="stat-card">
                     <div class="label">Server Port</div>
@@ -493,6 +553,16 @@ def home():
                         <div style="margin-top: 10px;">
                             <span class="method">POST</span>
                             <small style="color: #666;">Requires: image_data or image_url</small>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <h3>⚖️ BMI Calculator</h3>
+                        <p style="color: #666; margin: 10px 0;">Calculates Body Mass Index and provides health classification</p>
+                        <div class="endpoint">POST /api/v1/calculate-bmi</div>
+                        <div style="margin-top: 10px;">
+                            <span class="method">POST</span>
+                            <small style="color: #666;">Requires: weight_kg, height_m</small>
                         </div>
                     </div>
                 </div>
@@ -702,12 +772,50 @@ def transcribe_audio():
         })
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/v1/calculate-bmi', methods=['POST'])
+def calculate_bmi():
+    """BMI Calculator Endpoint
+    
+    Expected JSON input:
+    {
+        "weight_kg": 70.0,
+        "height_m": 1.75
+    }
+    
+    Returns BMI value, category, risk level, and health recommendation
+    """
+    start_time = time.time()
+    
+    try:
+        data = request.get_json()
+        result = bmi_calculator(data)
+        
+        execution_log.append({
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'model': 'BMI Calculator',
+            'endpoint': '/api/v1/calculate-bmi',
+            'status': 'success',
+            'duration': round((time.time() - start_time) * 1000, 2)
+        })
+        
+        return jsonify(result), 200
+    
+    except Exception as e:
+        execution_log.append({
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'model': 'BMI Calculator',
+            'endpoint': '/api/v1/calculate-bmi',
+            'status': 'error',
+            'duration': round((time.time() - start_time) * 1000, 2)
+        })
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/v1/health', methods=['GET'])
 def health():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'models': ['iris-classifier', 'sentiment-analyzer', 'image-classifier'],
+        'models': ['iris-classifier', 'sentiment-analyzer', 'image-classifier', 'bmi-calculator'],
         'total_requests': len(execution_log),
         'timestamp': datetime.now().isoformat()
     }), 200
@@ -721,6 +829,7 @@ if __name__ == '__main__':
     print(f"   - POST http://localhost:8080/api/v1/predict (Iris Classifier)")
     print(f"   - POST http://localhost:8080/api/v1/sentiment (Sentiment Analyzer)")
     print(f"   - POST http://localhost:8080/api/v1/classify-image (Image Classifier)")
+    print(f"   - POST http://localhost:8080/api/v1/calculate-bmi (BMI Calculator) ⭐ NEW")
     print(f"   - GET  http://localhost:8080/api/v1/health (Health Check)")
     print("=" * 70)
     print("✨ Server ready for model execution testing!")

@@ -374,6 +374,234 @@ curl http://localhost:3000/v3/models/executions?assetId=asset-executable-demo-ir
 
 ---
 
+## 📝 HTTP Model Registration with Input Schema
+
+### Overview
+
+**NEW Feature (v2.1)**: When registering HTTP models in the Create AI Asset interface, you can now define the input schema that the model expects. This enables:
+- **Dynamic Form Generation**: The IA Execution interface automatically generates input forms based on the schema
+- **Type Validation**: Input types (string, int, float, boolean) with min/max constraints
+- **Ontology Integration**: Input schemas are stored as part of Daimo/JS_Pionera_Ontology metadata
+- **Model Cards**: Input requirements are displayed in the Asset Browser for HTTP models
+
+### Registration Workflow
+
+#### Step 1: Complete Basic Information
+Navigate to **Create AI Asset** and fill in the **Asset Information** tab:
+- ID, Name, Version
+- Description and keywords
+- Asset Type: MLModel
+
+#### Step 2: Add ML Metadata
+In the **ML Metadata** tab, configure:
+- Task, Subtask, Algorithm
+- Library, Framework, Software
+- Model Format
+
+#### Step 3: Configure HTTP Storage
+
+In the **Storage Information** tab:
+1. Select **Storage Destination**: `HttpData`
+2. Fill **all required fields**:
+   - Name *
+   - Base URL * (e.g., `https://ml-api.example.com`)
+   - Path * (e.g., `/models/predict`)
+   - Content Type * (e.g., `application/json`)
+   - Auth Key * (if authentication required)
+   - Auth Code * (if authentication required)
+   - Secret Name * (if using secret manager)
+3. Select **at least one Proxy Setting**:
+   - ☑️ Proxy Body (recommended for ML models)
+   - ☑️ Proxy Method (recommended for POST requests)
+   - Proxy Path (optional)
+   - Proxy Query Params (optional)
+
+**Important**: Once all HTTP fields are complete, the system will:
+- Display a **warning notification** (8 seconds)
+- **Automatically redirect** to the ML Metadata tab
+- Prompt you to configure the **Model Input Schema** (REQUIRED)
+
+#### Step 4: Define Model Input Schema
+
+Back in the **ML Metadata** tab (after auto-redirect), you'll see a new section: **Model Input Schema (REQUIRED for HTTP Models)**.
+
+**Option A: Use a Template** (Quick Start)
+```
+Select from dropdown:
+- Tabular Data (4 numeric features)
+- Text Input (single string field)
+- Image Input (base64 + format)
+- Custom Configuration
+```
+
+**Option B: Manual Configuration**
+1. Click **"Add Input Field"**
+2. For each field, configure:
+   - **Field Name*** (use snake_case, e.g., `sepal_length`)
+   - **Data Type*** (string, int, float, number, boolean)
+   - **Description** (shown as hint in execution interface)
+   - **Required** (checkbox)
+   - **Min/Max Value** (for numeric types)
+
+**Example: House Price Predictor**
+```json
+{
+  "fields": [
+    {
+      "name": "superficie_m2",
+      "type": "float",
+      "description": "Superficie total en metros cuadrados",
+      "required": true,
+      "min": 30,
+      "max": 500
+    },
+    {
+      "name": "habitaciones",
+      "type": "int",
+      "description": "Número de habitaciones",
+      "required": true,
+      "min": 1,
+      "max": 10
+    },
+    {
+      "name": "banos",
+      "type": "int",
+      "description": "Número de baños",
+      "required": true,
+      "min": 1,
+      "max": 5
+    },
+    {
+      "name": "antiguedad_anos",
+      "type": "int",
+      "description": "Antigüedad en años",
+      "required": true,
+      "min": 0,
+      "max": 100
+    }
+  ]
+}
+```
+
+**JSON Preview**: The system shows a real-time preview of your schema in JSON format.
+
+#### Step 5: Save Asset
+
+Click **"Create Asset"** to save. The system will:
+- Validate all required fields
+- Store the input schema in `ml_metadata.input_features` (JSONB column)
+- Save as part of Daimo/JS_Pionera_Ontology
+- Make it available in the Asset Browser
+
+---
+
+### Using the Registered Model
+
+#### In Asset Browser (Model Card)
+When viewing an HTTP model in the Asset Browser:
+1. Navigate to **AI Assets Browser**
+2. Select your HTTP model
+3. View the **Model Input Schema** card
+4. See all required inputs with their types, descriptions, and constraints
+
+#### In IA Execution (Dynamic Form)
+When executing the model:
+1. Go to **IA Execution**
+2. Select your HTTP model from dropdown
+3. **Dynamic form is automatically generated** with:
+   - Input fields for each defined parameter
+   - Type-specific controls (number inputs, text fields, checkboxes)
+   - Min/Max validation
+   - Required field indicators
+   - Description hints
+4. Fill the form and execute
+
+**Example Generated Form for House Price Predictor:**
+```
+┌─────────────────────────────────────┐
+│ Superficie M2 *                      │
+│ [________] (30 - 500)               │
+│ Superficie total en metros cuadrados│
+├─────────────────────────────────────┤
+│ Habitaciones *                       │
+│ [__] (1 - 10)                       │
+│ Número de habitaciones              │
+├─────────────────────────────────────┤
+│ Baños *                             │
+│ [__] (1 - 5)                        │
+│ Número de baños                     │
+├─────────────────────────────────────┤
+│ Antiguedad Anos *                   │
+│ [__] (0 - 100)                      │
+│ Antigüedad en años                  │
+└─────────────────────────────────────┘
+```
+
+---
+
+### Ontology Integration (Daimo/JS_Pionera_Ontology)
+
+The input schema is stored as part of the ML Metadata and follows the Daimo ontology structure:
+
+**Database Storage:**
+```sql
+-- ml_metadata table
+{
+  "task": "Regression",
+  "algorithm": "RandomForest",
+  "library": "scikit-learn",
+  "input_features": {  -- JSONB column
+    "fields": [
+      {
+        "name": "feature_name",
+        "type": "float",
+        "required": true,
+        "description": "Feature description",
+        "min": 0,
+        "max": 100
+      }
+    ]
+  }
+}
+```
+
+**Ontology Mapping:**
+- `input_features` → Daimo property for model input specification
+- Stored as JSONB for flexible schema evolution
+- Compatible with ML execution pipelines
+- Queryable for schema discovery
+
+---
+
+### Best Practices
+
+1. **Use Descriptive Field Names**
+   - ✅ `sepal_length_cm`, `user_age_years`
+   - ❌ `x1`, `var`, `input`
+
+2. **Add Meaningful Descriptions**
+   - Help users understand what each input represents
+   - Include units (cm, kg, %, etc.)
+
+3. **Set Realistic Min/Max Values**
+   - Prevent invalid inputs
+   - Reflect actual model training range
+
+4. **Mark Required Fields Appropriately**
+   - Only mark as required if model cannot run without it
+
+5. **Choose the Right Data Type**
+   - `int` for counts, IDs
+   - `float` for measurements, percentages
+   - `string` for text, categories
+   - `boolean` for yes/no flags
+
+6. **Start with Templates**
+   - Modify templates rather than building from scratch
+   - Templates cover common patterns
+
+---
+
 ## 🧪 Testing Guide
 
 ### Complete Testing Workflow

@@ -1,7 +1,20 @@
 <div class="catalog-detail-container" *ngIf="data">
-  <button class="go-back" (click)="backToList()" color="accent" mat-stroked-button>
-    <mat-icon>arrow_back</mat-icon> Go back
-  </button>
+  <div class="header-actions">
+    <button class="go-back" (click)="backToList()" color="accent" mat-stroked-button>
+      <mat-icon>arrow_back</mat-icon> Go back
+    </button>
+    
+    <!-- Execute Model Button (Only for HTTP/Executable Models) -->
+    <button 
+      *ngIf="isHttpModel()" 
+      class="execute-model-btn" 
+      (click)="navigateToExecution()" 
+      color="primary" 
+      mat-raised-button>
+      <mat-icon>play_circle</mat-icon>
+      Execute Model
+    </button>
+  </div>
 
   <mat-tab-group [selectedIndex]="selectedTabIndex" animationDuration="0ms" mat-stretch-tabs="false" 
                  mat-align-tabs="start" class="main-tab-group">
@@ -84,6 +97,111 @@
               <div class="property-title" matListItemTitle>Owner</div>
               <div class="property-value" matListItemLine>{{ data.properties.owner || data.originator }}</div>
             </mat-list-item>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- ML Metadata Card (if available) -->
+      <mat-card class="dialog-card" *ngIf="hasMLMetadata()">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>psychology</mat-icon>
+            Machine Learning Metadata
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="properties-grid">
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('task')">
+              <div class="property-title" matListItemTitle>Task</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('task') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('subtask')">
+              <div class="property-title" matListItemTitle>Subtask</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('subtask') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('algorithm')">
+              <div class="property-title" matListItemTitle>Algorithm</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('algorithm') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('library')">
+              <div class="property-title" matListItemTitle>Library</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('library') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('framework')">
+              <div class="property-title" matListItemTitle>Framework</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('framework') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('software')">
+              <div class="property-title" matListItemTitle>Software</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('software') }}</div>
+            </mat-list-item>
+
+            <mat-list-item class="property" *ngIf="getMLMetadataValue('format')">
+              <div class="property-title" matListItemTitle>Model Format</div>
+              <div class="property-value" matListItemLine>{{ getMLMetadataValue('format') }}</div>
+            </mat-list-item>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Model Input Schema Card (Only for HTTP Models) -->
+      <mat-card class="dialog-card" *ngIf="isHttpModel() && hasInputSchema()">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>input</mat-icon>
+            Model Input Schema (HTTP Execution)
+          </mat-card-title>
+          <mat-card-subtitle>Required inputs for model execution via IA Execution interface</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="input-schema-section">
+            <mat-expansion-panel *ngFor="let field of getInputFields(); let i = index" class="input-field-panel">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon class="field-icon">
+                    {{ field.type === 'string' ? 'text_fields' : field.type === 'boolean' ? 'toggle_on' : 'pin' }}
+                  </mat-icon>
+                  <span class="field-name">{{ field.name }}</span>
+                  <mat-chip class="type-chip">{{ field.type }}</mat-chip>
+                  <mat-chip class="required-chip" *ngIf="field.required">Required</mat-chip>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <div class="field-details">
+                <div class="field-detail-row" *ngIf="field.description">
+                  <strong>Description:</strong>
+                  <span>{{ field.description }}</span>
+                </div>
+                <div class="field-detail-row">
+                  <strong>Type:</strong>
+                  <span>{{ field.type }}</span>
+                </div>
+                <div class="field-detail-row">
+                  <strong>Required:</strong>
+                  <span>{{ field.required ? 'Yes' : 'No' }}</span>
+                </div>
+                <div class="field-detail-row" *ngIf="field.min !== undefined">
+                  <strong>Min Value:</strong>
+                  <span>{{ field.min }}</span>
+                </div>
+                <div class="field-detail-row" *ngIf="field.max !== undefined">
+                  <strong>Max Value:</strong>
+                  <span>{{ field.max }}</span>
+                </div>
+              </div>
+            </mat-expansion-panel>
+
+            <div class="schema-info-box">
+              <mat-icon>info</mat-icon>
+              <p>
+                This schema is registered as part of the Daimo/JS_Pionera_Ontology metadata 
+                and is used to generate a dynamic form in the IA Execution interface.
+              </p>
+            </div>
           </div>
         </mat-card-content>
       </mat-card>

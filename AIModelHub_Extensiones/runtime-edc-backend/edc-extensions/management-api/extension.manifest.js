@@ -148,19 +148,49 @@ module.exports = new ExtensionManifest({
         
         // Insert data address
         if (dataAddress && dataAddress.type) {
+          const addressType = dataAddress['@type'] || dataAddress.type;
+          
+          // For HttpData, auto-configure execution fields
+          let isExecutable = false;
+          let executionEndpoint = null;
+          let executionMethod = 'POST';
+          let executionTimeout = 30000;
+          
+          if (addressType === 'HttpData') {
+            isExecutable = true;
+            
+            // Build execution_endpoint from baseUrl + path
+            const baseUrl = dataAddress.baseUrl || '';
+            const path = dataAddress.path || '';
+            if (baseUrl && path) {
+              executionEndpoint = `${baseUrl}${path}`;
+            }
+            
+            // Use configured values or defaults
+            executionMethod = dataAddress.executionMethod || dataAddress.execution_method || 'POST';
+            executionTimeout = dataAddress.executionTimeout || dataAddress.execution_timeout || 30000;
+          }
+          
           await client.query(
-            `INSERT INTO data_addresses (asset_id, type, name, base_url, path, bucket_name, endpoint_override, folder, file_name)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            `INSERT INTO data_addresses (
+              asset_id, type, name, base_url, path, bucket_name, endpoint_override, folder, file_name,
+              is_executable, execution_endpoint, execution_method, execution_timeout
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
             [
               assetId,
-              dataAddress['@type'] || dataAddress.type,
+              addressType,
               dataAddress.name || null,
               dataAddress.baseUrl || null,
               dataAddress.path || null,
               dataAddress.bucketName || null,
               dataAddress.endpointOverride || null,
               dataAddress.folder || null,
-              dataAddress.fileName || null
+              dataAddress.fileName || null,
+              isExecutable,
+              executionEndpoint,
+              executionMethod,
+              executionTimeout
             ]
           );
         }
