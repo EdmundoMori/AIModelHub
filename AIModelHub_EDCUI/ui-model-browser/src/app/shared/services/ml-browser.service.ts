@@ -80,12 +80,13 @@ export class MlBrowserService {
         console.log('[ML Browser Service] Parsed datasets:', datasets);
         console.log('[ML Browser Service] Dataset types:', datasets.map(d => ({ id: d.id, type: d.assetType })));
         
-        // Client-side filter by assetType = machineLearning or deepLearning
+        // Client-side filter by assetType = machineLearning, deepLearning, or MLModel
         const mlAssets = datasets.filter(asset => {
           const isAI = asset.assetType === 'machineLearning' || 
                        asset.assetType === 'Machine Learning' ||
                        asset.assetType === 'deepLearning' ||
-                       asset.assetType === 'Deep Learning';
+                       asset.assetType === 'Deep Learning' ||
+                       asset.assetType === 'MLModel';
           console.log(`[ML Browser Service] Asset ${asset.id}: type="${asset.assetType}", isAI=${isAI}`);
           return isAI;
         });

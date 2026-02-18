@@ -69,6 +69,11 @@ export class NavigationComponent {
       icon: 'play_circle'
     },
     {
+      path: '/model-benchmarking',
+      label: 'Model Benchmarking',
+      icon: 'assessment'
+    },
+    {
       path: '/negotiations',
       label: 'EDC Negotiation',
       icon: 'handshake'

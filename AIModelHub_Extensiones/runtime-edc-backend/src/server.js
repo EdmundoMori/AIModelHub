@@ -818,6 +818,127 @@ app.delete('/v3/assets/:id', async (req, res) => {
   }
 });
 
+// ==================== VALIDATION DATASETS ENDPOINTS ====================
+
+/**
+ * GET /v3/validation-datasets
+ * Get validation datasets for model benchmarking
+ * Optional query parameter: task_type (classification, regression, nlp, vision, other)
+ */
+app.get('/v3/validation-datasets', optionalAuth, async (req, res) => {
+  try {
+    const { task_type } = req.query;
+    
+    let query = `
+      SELECT 
+        id,
+        name,
+        task_type,
+        samples,
+        description,
+        features_schema,
+        data,
+        labels_column,
+        created_at
+      FROM validation_datasets
+    `;
+    
+    const params = [];
+    if (task_type) {
+      query += ` WHERE task_type = $1`;
+      params.push(task_type);
+    }
+    
+    query += ` ORDER BY task_type, name`;
+    
+    const result = await pool.query(query, params);
+    
+    const datasets = result.rows.map(row => ({
+      '@id': row.id,
+      id: row.id,
+      name: row.name,
+      taskType: row.task_type,
+      samples: row.samples,
+      description: row.description,
+      featuresSchema: row.features_schema,
+      data: row.data,
+      labelsColumn: row.labels_column,
+      createdAt: row.created_at
+    }));
+    
+    res.json(datasets);
+    
+  } catch (error) {
+    console.error('Error fetching validation datasets:', error);
+    res.status(500).json({
+      errors: [{
+        message: error.message,
+        type: 'FetchError'
+      }]
+    });
+  }
+});
+
+/**
+ * GET /v3/validation-datasets/:id
+ * Get a specific validation dataset by ID
+ */
+app.get('/v3/validation-datasets/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      `SELECT 
+        id,
+        name,
+        task_type,
+        samples,
+        description,
+        features_schema,
+        data,
+        labels_column,
+        created_at
+      FROM validation_datasets
+      WHERE id = $1`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        errors: [{
+          message: `Validation dataset with id ${id} not found`,
+          type: 'NotFound'
+        }]
+      });
+    }
+    
+    const row = result.rows[0];
+    const dataset = {
+      '@id': row.id,
+      id: row.id,
+      name: row.name,
+      taskType: row.task_type,
+      samples: row.samples,
+      description: row.description,
+      featuresSchema: row.features_schema,
+      data: row.data,
+      labelsColumn: row.labels_column,
+      createdAt: row.created_at
+    };
+    
+    res.json(dataset);
+    
+  } catch (error) {
+    console.error('Error fetching validation dataset:', error);
+    res.status(500).json({
+      errors: [{
+        message: error.message,
+        type: 'FetchError'
+      }]
+    });
+  }
+});
+
 // ==================== POLICY DEFINITIONS ENDPOINTS ====================
 
 /**
@@ -1422,6 +1543,353 @@ app.post('/v3/simulator/connectors/:id/toggle', authenticateToken, async (req, r
     res.status(500).json({
       error: 'Server Error',
       message: error.message
+    });
+  }
+});
+
+// ==================== MODEL EXECUTION ENDPOINTS ====================
+
+/**
+ * GET /v3/models/executable
+ * Get all executable models (HttpData models)
+ */
+app.get('/v3/models/executable', authenticateToken, async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        a.id,
+        a.name,
+        a.asset_type,
+        a.version,
+        a.owner,
+        a.description,
+        a.short_description,
+        a.created_at,
+        da.execution_endpoint,
+        da.execution_method,
+        da.execution_timeout,
+        mm.task,
+        mm.algorithm,
+        mm.framework,
+        mm.input_features
+      FROM assets a
+      LEFT JOIN data_addresses da ON a.id = da.asset_id
+      LEFT JOIN ml_metadata mm ON a.id = mm.asset_id
+      WHERE da.type = 'HttpData'
+        AND da.execution_endpoint IS NOT NULL
+        AND da.is_executable = true
+      ORDER BY a.created_at DESC
+    `;
+
+    const result = await pool.query(query);
+    
+    const executableAssets = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      version: row.version || '1.0',
+      asset_type: row.asset_type,
+      owner: row.owner,
+      description: row.description,
+      short_description: row.short_description,
+      execution_endpoint: row.execution_endpoint,
+      execution_method: row.execution_method || 'POST',
+      execution_timeout: row.execution_timeout,
+      task: row.task,
+      algorithm: row.algorithm,
+      framework: row.framework,
+      input_features: row.input_features,
+      created_at: row.created_at
+    }));
+
+    res.status(200).json({
+      count: executableAssets.length,
+      assets: executableAssets
+    });
+
+  } catch (error) {
+    console.error('[Model Execution] Error loading executable models:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to load executable models',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /v3/assets/:assetId/executable
+ * Check if a specific asset is executable and get its metadata
+ */
+app.get('/v3/assets/:assetId/executable', authenticateToken, async (req, res) => {
+  try {
+    const { assetId } = req.params;
+
+    const query = `
+      SELECT 
+        a.id,
+        a.name,
+        a.asset_type,
+        da.type as data_address_type,
+        da.execution_endpoint,
+        da.execution_method,
+        da.execution_timeout,
+        da.is_executable,
+        mm.input_features
+      FROM assets a
+      LEFT JOIN data_addresses da ON a.id = da.asset_id
+      LEFT JOIN ml_metadata mm ON a.id = mm.asset_id
+      WHERE a.id = $1
+    `;
+
+    const result = await pool.query(query, [assetId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        assetId,
+        assetName: null,
+        isExecutable: false,
+        error: 'Asset not found'
+      });
+    }
+
+    const asset = result.rows[0];
+    const isExecutable = asset.data_address_type === 'HttpData' && 
+                         asset.execution_endpoint && 
+                         asset.is_executable;
+
+    res.status(200).json({
+      assetId: asset.id,
+      assetName: asset.name,
+      isExecutable,
+      executionEndpoint: isExecutable ? asset.execution_endpoint : null,
+      executionMethod: isExecutable ? (asset.execution_method || 'POST') : null,
+      executionTimeout: isExecutable ? (asset.execution_timeout || 30000) : null,
+      inputSchema: asset.input_features
+    });
+
+  } catch (error) {
+    console.error('[Model Execution] Error checking asset executable:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to check asset executable status',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /v3/models/execute
+ * Execute a model with given input
+ */
+app.post('/v3/models/execute', authenticateToken, async (req, res) => {
+  try {
+    const { assetId, input, options } = req.body;
+    const userId = req.user.id;
+    const connectorId = req.user.connectorId;
+
+    if (!assetId || !input) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Missing required fields: assetId and input'
+      });
+    }
+
+    // Get asset execution endpoint
+    const checkQuery = `
+      SELECT 
+        a.name,
+        da.execution_endpoint,
+        da.execution_method,
+        da.execution_timeout,
+        mm.input_features
+      FROM assets a
+      LEFT JOIN data_addresses da ON a.id = da.asset_id
+      LEFT JOIN ml_metadata mm ON a.id = mm.asset_id
+      WHERE a.id = $1 AND da.type = 'HttpData' AND da.is_executable = true
+    `;
+
+    const checkResult = await pool.query(checkQuery, [assetId]);
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Asset not found or not executable'
+      });
+    }
+
+    const asset = checkResult.rows[0];
+    const executionUrl = asset.execution_endpoint;
+    const method = asset.execution_method || 'POST';
+    const timeout = options?.timeout || asset.execution_timeout || 30000;
+
+    // Create execution record
+    const executionId = uuidv4();
+    const insertQuery = `
+      INSERT INTO execution_history 
+        (id, asset_id, user_id, connector_id, status, input_payload, created_at)
+      VALUES ($1, $2, $3, $4, 'running', $5, NOW())
+      RETURNING *
+    `;
+
+    await pool.query(insertQuery, [
+      executionId,
+      assetId,
+      userId,
+      connectorId,
+      JSON.stringify(input)
+    ]);
+
+    // Execute model
+    const startTime = Date.now();
+    let executionResult;
+    let executionError = null;
+    let httpStatus = null;
+
+    try {
+      const axios = require('axios');
+      const response = await axios({
+        method,
+        url: executionUrl,
+        data: input,
+        headers: options?.headers || {},
+        timeout
+      });
+
+      executionResult = response.data;
+      httpStatus = response.status;
+
+    } catch (error) {
+      console.error('[Model Execution] HTTP request failed:', error.message);
+      executionError = {
+        message: error.message,
+        code: error.code || 'EXECUTION_FAILED',
+        httpStatus: error.response?.status
+      };
+      httpStatus = error.response?.status || 500;
+    }
+
+    const executionTimeMs = Date.now() - startTime;
+
+    // Update execution record
+    const updateQuery = `
+      UPDATE execution_history
+      SET 
+        status = $1,
+        output_payload = $2,
+        error_message = $3,
+        error_code = $4,
+        http_status_code = $5,
+        execution_time_ms = $6,
+        completed_at = NOW()
+      WHERE id = $7
+      RETURNING *
+    `;
+
+    await pool.query(updateQuery, [
+      executionError ? 'error' : 'success',
+      executionResult ? JSON.stringify(executionResult) : null,
+      executionError?.message || null,
+      executionError?.code || null,
+      httpStatus,
+      executionTimeMs,
+      executionId
+    ]);
+
+    res.status(executionError ? 500 : 200).json({
+      executionId,
+      status: executionError ? 'error' : 'success',
+      assetId,
+      assetName: asset.name,
+      output: executionResult,
+      error: executionError,
+      executionTimeMs,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Model Execution] Error executing model:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to execute model',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /v3/models/executions
+ * Get execution history for an asset
+ */
+app.get('/v3/models/executions', authenticateToken, async (req, res) => {
+  try {
+    const { assetId, limit = 20 } = req.query;
+    const userId = req.user.id;
+
+    if (!assetId) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Missing required parameter: assetId'
+      });
+    }
+
+    const query = `
+      SELECT *
+      FROM execution_history
+      WHERE asset_id = $1 AND user_id = $2
+      ORDER BY created_at DESC
+      LIMIT $3
+    `;
+
+    const result = await pool.query(query, [assetId, userId, parseInt(limit)]);
+
+    res.status(200).json({
+      assetId,
+      count: result.rows.length,
+      executions: result.rows
+    });
+
+  } catch (error) {
+    console.error('[Model Execution] Error loading execution history:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to load execution history',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /v3/models/executions/:executionId
+ * Get specific execution details
+ */
+app.get('/v3/models/executions/:executionId', authenticateToken, async (req, res) => {
+  try {
+    const { executionId } = req.params;
+    const userId = req.user.id;
+
+    const query = `
+      SELECT *
+      FROM execution_history
+      WHERE id = $1 AND user_id = $2
+    `;
+
+    const result = await pool.query(query, [executionId, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Execution not found'
+      });
+    }
+
+    res.status(200).json(result.rows[0]);
+
+  } catch (error) {
+    console.error('[Model Execution] Error loading execution details:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to load execution details',
+      details: error.message
     });
   }
 });

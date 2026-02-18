@@ -9,6 +9,7 @@ import { ContractDefinitionNewComponent } from './pages/contract-definitions/con
 import { LoginComponent } from './pages/login/login.component';
 import { ModelExecutionComponent } from './pages/model-execution/model-execution.component';
 import { ContractNegotiationComponent } from './pages/contract-negotiation/contract-negotiation.component';
+import { ModelBenchmarkingComponent } from './pages/model-benchmarking/model-benchmarking.component';
 import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
@@ -59,6 +60,11 @@ export const routes: Routes = [
   {
     path: 'models/execute',
     component: ModelExecutionComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'model-benchmarking',
+    component: ModelBenchmarkingComponent,
     canActivate: [authGuard]
   },
   {

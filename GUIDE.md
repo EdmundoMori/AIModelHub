@@ -14,7 +14,7 @@ Complete platform for managing AI models with EDC-compatible runtime in Node.js 
 4. [Quick Start](#quick-start)
 5. [Project Structure](#project-structure)
 6. [Services](#services)
-7. [Model Execution Feature](#model-execution-feature)
+7. [Model Execution & Benchmarking Feature](#model-execution--benchmarking-feature)
 8. [Testing Guide](#testing-guide)
 9. [Advanced Configuration](#advanced-configuration)
 10. [Troubleshooting](#troubleshooting)
@@ -34,13 +34,15 @@ Complete platform for managing AI models with EDC-compatible runtime in Node.js 
 - ✅ **Contract Definitions** - EDC-style policies and contracts
 - ✅ **Catalog Federation** - Discover assets from multiple connectors
 
-### Model Execution (NEW)
+### Model Execution & Benchmarking
 - ✅ **HTTP Model Invocation** - Execute models through REST API endpoints
 - ✅ **Execution Dashboard** - Visual interface for model execution
-- ✅ **Input Editor** - JSON editor with validation
+- ✅ **Schema-Driven Validation** - Type, required fields, and min/max checks from model metadata
 - ✅ **Result Visualization** - View execution results and errors
 - ✅ **Execution History** - Track all model executions
-- ✅ **Mock Server** - Test environment with 3 sample models
+- ✅ **Benchmarking (25 Models)** - Comparative evaluation across 5 compatible groups
+- ✅ **Obtain Outputs Flow** - Single and dataset execution outputs with CSV/JSON download
+- ✅ **Mock Server** - Test environment with grouped benchmark-ready endpoints
 - ✅ **Real-time Monitoring** - Dashboard showing live execution logs
 
 ---
@@ -81,6 +83,7 @@ Complete platform for managing AI models with EDC-compatible runtime in Node.js 
    - Asset browser and catalog
    - Asset creation forms
    - Model execution interface
+  - Model benchmarking interface
    - Contract management
 
 2. **Backend (Node.js + Express)**
@@ -100,7 +103,7 @@ Complete platform for managing AI models with EDC-compatible runtime in Node.js 
    - Documentation files
 
 5. **Mock Server (Python + Flask)**
-   - 3 sample AI models
+  - 25 HTTP benchmark models in 5 compatible groups
    - Real-time dashboard
    - Execution logging
 
@@ -177,7 +180,7 @@ AIModelHub/
 │   │   ├── edc-extensions/            # EDC extensions
 │   │   │   ├── asset-management/      # Asset CRUD
 │   │   │   ├── ml-metadata/           # ML-specific metadata
-│   │   │   └── model-execution/       # Model execution (NEW)
+│   │   │   └── model-execution/       # Model execution
 │   │   └── package.json               # Backend dependencies
 │   │
 │   ├── database-scripts/               # Database initialization scripts
@@ -205,7 +208,8 @@ AIModelHub/
         │   │   │   ├── ml-assets-browser/
         │   │   │   ├── asset-detail/
         │   │   │   ├── asset-create/
-        │   │   │   ├── model-execution/  # NEW
+        │   │   │   ├── model-execution/
+        │   │   │   ├── model-benchmarking/
         │   │   │   ├── catalog/
         │   │   │   └── contracts/
         │   │   ├── shared/
@@ -258,9 +262,9 @@ Database: ml_assets_db
 
 ---
 
-## 🚀 Model Execution Feature
+## 🚀 Model Execution & Benchmarking Feature
 
-The Model Execution feature allows you to execute AI models through HTTP endpoints directly from the AIModelHub interface.
+The platform includes model execution and comparative benchmarking for HTTP models directly from the AIModelHub interface.
 
 ### Key Components
 
@@ -284,10 +288,12 @@ GET    /v3/assets/:id/executable       # Check if asset is executable
 
 **Features:**
 - Model selection dropdown
-- JSON input editor with validation
+- Schema-aware input validation
 - Result visualization (success/error/timeout)
 - Execution history per model
 - Direct access from asset detail page
+- Benchmark inputs with unified schema form for compatible selected models
+- Obtain Outputs flow with output tables and dataset export (CSV/JSON)
 
 #### 3. Database Schema
 - **model_executions** table - Execution tracking
@@ -295,15 +301,17 @@ GET    /v3/assets/:id/executable       # Check if asset is executable
 - **data_addresses** extensions - Execution endpoint, method, timeout
 
 #### 4. Mock Server (`model-server/`)
-- **3 Sample Models:**
-  - Iris Classifier (POST /api/v1/predict)
-  - Sentiment Analyzer (POST /api/v1/sentiment)
-  - Image Classifier (POST /api/v1/classify-image)
+- **25 HTTP Benchmark Models:**
+  - Medical Imaging (5)
+  - Sentiment Analysis (5)
+  - Health Metrics (5)
+  - Flora Classification (5)
+  - Fraud Detection (5)
 
 - **Visual Dashboard** (http://localhost:8080):
   - Real-time execution logs
-  - Model cards with endpoints
-  - Statistics (total requests, available models)
+  - Model cards with grouped endpoints
+  - Statistics (total requests, available models/groups)
   - Auto-refresh every 5 seconds
 
 ### How to Use
@@ -318,8 +326,16 @@ GET    /v3/assets/:id/executable       # Check if asset is executable
 1. Click "IA Execution" in the navigation menu
 2. Or navigate to: http://localhost:4200/models/execute
 3. Select a model from the dropdown
-4. Enter input JSON
+4. Provide input (JSON or schema-driven form depending on model configuration)
 5. Click "Execute Model"
+
+#### Option C: Comparative Benchmarking
+1. Open "Model Benchmarking" from the navigation menu
+2. Select compatible models (same input schema)
+3. Configure metrics and choose input mode (single/dataset)
+4. Click **Validate Input** to verify schema compliance
+5. Click **Obtain Outputs** to run selected models
+6. Review outputs and export dataset results in CSV/JSON
 
 #### Example: Execute Iris Classifier
 
@@ -378,11 +394,11 @@ curl http://localhost:3000/v3/models/executions?assetId=asset-executable-demo-ir
 
 ### Overview
 
-**NEW Feature (v2.1)**: When registering HTTP models in the Create AI Asset interface, you can now define the input schema that the model expects. This enables:
+When registering HTTP models in the Create AI Asset interface, you can define the input schema that the model expects. This enables:
 - **Dynamic Form Generation**: The IA Execution interface automatically generates input forms based on the schema
 - **Type Validation**: Input types (string, int, float, boolean) with min/max constraints
 - **Ontology Integration**: Input schemas are stored as part of Daimo/JS_Pionera_Ontology metadata
-- **Model Cards**: Input requirements are displayed in the Asset Browser for HTTP models
+- **Model Cards & Benchmarking Compatibility**: Input requirements are displayed and used to validate comparative selection
 
 ### Registration Workflow
 
@@ -635,7 +651,25 @@ curl http://localhost:8080
 7. **View History**: Check History tab
 8. **Monitor**: Open http://localhost:8080 in another tab
 
+#### 2.1 Test Benchmarking UI
+
+1. **Open Benchmarking**: Navigate to "Model Benchmarking"
+2. **Select Compatible Models**: Pick models with the same input schema
+3. **Choose Input Mode**: Single input or dataset batch
+4. **Validate**: Click "Validate Input"
+5. **Execute**: Click "Obtain Outputs"
+6. **Review**: Check output status and normalized output table
+7. **Export**: Download dataset results in CSV/JSON
+
 #### 3. Test All Models
+
+Use grouped model sets for fair comparison in benchmarking:
+
+- Medical Imaging (Vision)
+- Sentiment Analysis (NLP)
+- Health Metrics (Regression)
+- Flora Classification (Tabular)
+- Fraud Detection (Classification)
 
 **Iris Classifier (fastest):**
 ```json
@@ -671,9 +705,10 @@ curl http://localhost:8080
 4. Restart mock server: `cd AIModelHub_Extensiones/model-server && ./start-mock-server.sh`
 
 **Invalid JSON:**
-1. Enter malformed JSON in input editor
-2. Should see validation error
-3. Fix JSON and retry
+1. Enter malformed JSON in IA Execution (when JSON mode is active)
+2. In Benchmarking, provide invalid field types or out-of-range values
+3. Click "Validate Input" and verify schema error feedback
+4. Fix input and retry
 
 ---
 
@@ -727,7 +762,7 @@ docker exec -i ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
 **Note**: The `000_init_database_complete.sql` includes:
 - Complete schema with all tables, indexes, and constraints
 - 2 demo users (user1-demo, user2-demo)
-- 14 AI models (4 HTTP + 10 S3)
+- 25+ executable HTTP models for benchmarking plus existing catalog assets
 - 8+ contracts with policies
 - All metadata and data addresses
 
@@ -917,6 +952,10 @@ cd AIModelHub_Extensiones/model-server
 # Verify executable assets in database
 docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
   -c "SELECT * FROM executable_assets;"
+
+# Verify validation datasets (for benchmarking)
+docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
+  -c "SELECT id, name, task_type FROM validation_datasets ORDER BY created_at DESC LIMIT 20;"
 ```
 
 #### Backend Extension Not Loading
@@ -1085,28 +1124,28 @@ menuItems = [
 
 ## 📝 License
 
-[Add your license here]
+AIModelHub is available under the **Apache License 2.0**.
 
 ---
 
 ## 🙏 Acknowledgments
 
-This project was developed as part of [project/initiative name].
+This project was developed as part of the PIONERA project initiative for interoperability in data spaces through AI.
 
 **Funding:**
-- [Funding source 1]
-- [Funding source 2]
+- PRTR framework funded by the European Union (NextGenerationEU)
+- Ministry for Digital Transformation and Public Administration
 
 ---
 
 ## 📞 Support
 
 For issues, questions, or contributions:
-- **Issues**: [GitHub Issues URL]
-- **Discussions**: [GitHub Discussions URL]
-- **Email**: [contact email]
+- **Issues**: Project repository issue tracker
+- **Discussions**: Project communication channels
+- **Email**: edmundo.mori.orrillo@upm.es / jiayun.liu@alumnos.upm.es
 
 ---
 
-**Last Updated:** January 22, 2026
-**Version:** 2.0.0
+**Last Updated:** February 18, 2026
+**Version:** 2.4.0

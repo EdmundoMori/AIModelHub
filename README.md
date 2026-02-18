@@ -8,13 +8,16 @@ EDC-compatible platform with Node.js runtime and Angular frontend for exploring,
 
 ## 🎯 Project Status
 
-**Version 2.0** - Fully functional AI model lifecycle platform for data spaces:
+**Version 2.4** - Plataforma prácticamente completa y operativa para el ciclo de vida de modelos IA en data spaces:
 - ✅ Asset registration and discovery
 - ✅ EDC-style policies and contracts
 - ✅ Provider-consumer negotiations
-- ✅ **Model execution through HTTP endpoints (NEW)**
+- ✅ Model execution through HTTP endpoints
 - ✅ Real-time execution monitoring
-- ✅ Mock server with sample models
+- ✅ Benchmarking system with 25 HTTP models (5 grupos compatibles)
+- ✅ Unified schema-driven benchmark inputs with strict validation
+- ✅ Obtain Outputs flow (single + dataset) with CSV/JSON downloads
+- ✅ Mock server with grouped endpoints for comparative evaluation
 
 ---
 
@@ -58,13 +61,17 @@ cd AIModelHub
 - ✅ Angular 18 frontend
 - ✅ Authentication and access control
 - ✅ Contract definitions and catalog federation
+- ✅ Validation datasets and task-aware metric configuration
 
-### Model Execution (NEW) 🚀
+### Model Execution & Benchmarking 🚀
 - ✅ Execute models via HTTP REST API
 - ✅ Visual execution dashboard
-- ✅ JSON input editor with validation
+- ✅ Metadata-based input validation (types, required fields, min/max)
 - ✅ Result visualization and history
-- ✅ Mock server with 3 sample models
+- ✅ Benchmark ranking and comparative metrics
+- ✅ Unified benchmark input form for compatible model groups
+- ✅ Dataset batch execution and output export (CSV/JSON)
+- ✅ Mock server with 25 benchmark-ready models
 - ✅ Real-time execution monitoring
 
 ---
@@ -127,11 +134,13 @@ After deployment:
 ## 🧪 Testing Model Execution
 
 1. Open http://localhost:4200 and login
-2. Click "IA Execution" in navigation menu
-3. Select "Iris Classifier Demo API"
-4. Click "Execute Model"
-5. View results and execution history
-6. Monitor on http://localhost:8080
+2. Click "IA Execution" in navigation menu to validate single-model execution
+3. Select a model and run "Execute Model"
+4. Verify outputs and execution history
+5. Open "Model Benchmarking" to compare compatible model groups
+6. Use "Validate Input" and "Obtain Outputs" (single or dataset mode)
+7. Export dataset outputs in CSV/JSON format
+8. Monitor runtime activity on http://localhost:8080
 
 **See [GUIDE.md](GUIDE.md) for detailed testing scenarios**
 
@@ -169,6 +178,63 @@ Common issues and solutions in [GUIDE.md](GUIDE.md) - Troubleshooting section:
 
 ---
 
+## 🧹 System Maintenance
+
+### Automated Cleanup
+
+Run the cleanup script to maintain system health:
+
+```bash
+./cleanup-project.sh
+```
+
+**What it does**:
+- 🗑️ Removes log files (optional)
+- 🧹 Cleans temporary files (.tmp, .bak, *~)
+- 🐍 Removes Python cache (__pycache__, *.pyc)
+- ✅ Verifies database integrity (no duplicates)
+- 📊 Shows project size analysis
+
+### Database Health Check
+
+```bash
+# Check for duplicate data_addresses
+docker exec ml-assets-postgres psql -U ml_assets_user -d ml_assets_db \
+  -c "SELECT asset_id, COUNT(*) FROM data_addresses GROUP BY asset_id HAVING COUNT(*) > 1;"
+
+# Expected: (0 rows) ← No duplicates
+```
+
+### Recent Optimizations (2026-02-18)
+
+✅ **Database Cleanup**:
+- Removed 30 duplicate rows from data_addresses (69 → 39)
+- Eliminated 3 unused columns (folder_name, folder, path)
+- Removed duplicate foreign key constraint
+- Achieved perfect 1:1 ratio: assets ↔ data_addresses
+
+✅ **Code & Feature Consolidation**:
+- Removed obsolete SQL scripts
+- Cleaned 92 __pycache__ directories
+- Optimized project structure (843MB)
+- Finalized model benchmarking UX for grouped, compatible schemas
+- Added robust schema validation for single and dataset benchmark inputs
+- Added dedicated OutPuts panel with normalized results and downloadable batches
+
+📄 See [DEPURACION_REPORT.md](DEPURACION_REPORT.md) for complete details.
+
+---
+
+## 📋 Additional Documentation
+
+- **[GUIDE.md](GUIDE.md)**: Complete setup and usage guide
+- **[GUIA_PASO_A_PASO.md](GUIA_PASO_A_PASO.md)**: Guía detallada en español
+- **[GUIA_ACCESO_CONECTORES.md](GUIA_ACCESO_CONECTORES.md)**: Guía de acceso a conectores
+- **[25_MODELS_BENCHMARKING_GUIDE.md](25_MODELS_BENCHMARKING_GUIDE.md)**: Benchmarking system with 25 HTTP models
+- **[DEPURACION_REPORT.md](DEPURACION_REPORT.md)**: Database cleanup and optimization report
+
+---
+
 ---
 
 ## 📝 License
@@ -203,5 +269,5 @@ This work has received funding from the **PIONERA project** (Enhancing interoper
 
 ---
 
-**Last Updated:** January 26, 2026  
-**Version:** 2.0.0
+**Last Updated:** February 18, 2026  
+**Version:** 2.4.0
